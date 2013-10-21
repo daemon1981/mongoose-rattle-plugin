@@ -12,28 +12,28 @@ actions = [
   'addLike',
   'addLikeToComment',
   'removeLike',
-  'removeLikeToComment'
- ]
+  'removeLikeFromComment'
+]
 
 ActivitySchema = new Schema(
   action:        type: String, index: true, enum: actions
   objectId:      type: ObjectId
   objectName:    type: String
   targetId:      type: ObjectId
-  actor:         type: ObjectId, ref: config.ModelNames.User, required: true
+  actor:         type: ObjectId, ref: config.mongooseRattle.User, required: true
   date:          type: Date, index: true
 )
 
 ActivitySchema.statics.actions =
-  update:              actions[0]
-  addComment:          actions[1]
-  addReplyToComment:   actions[2]
-  removeComment:       actions[3]
-  addLike:             actions[4]
-  addLikeToComment:    actions[5]
-  removeLike:          actions[6]
-  removeLikeToComment: actions[7]
+  update:                actions[0]
+  addComment:            actions[1]
+  addReplyToComment:     actions[2]
+  removeComment:         actions[3]
+  addLike:               actions[4]
+  addLikeToComment:      actions[5]
+  removeLike:            actions[6]
+  removeLikeFromComment: actions[7]
 
-Activity = mongoose.model "Activity", ActivitySchema
+Activity = mongoose.model config.mongooseRattle.Activity, ActivitySchema
 
 module.exports = Activity

@@ -19,14 +19,14 @@ module.exports = rattlePlugin = (schema, options) ->
 
   CommentSchema.add
     message:       type: String, required: true, max: 2000, min: 1
-    likes:         [type: ObjectId, ref: config.ModelNames.User]
+    likes:         [type: ObjectId, ref: config.mongooseRattle.User]
     comments:      [CommentSchema]
-    creator:       type: ObjectId, ref: config.ModelNames.User, required: true
+    creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
 
   schema.add
-    creator:       type: ObjectId, ref: config.ModelNames.User, required: true
-    owner:         type: ObjectId, ref: config.ModelNames.User, required: true
-    likes:         [type: ObjectId, ref: config.ModelNames.User]
+    creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
+    owner:         type: ObjectId, ref: config.mongooseRattle.User, required: true
+    likes:         [type: ObjectId, ref: config.mongooseRattle.User]
     comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
@@ -63,6 +63,8 @@ module.exports = rattlePlugin = (schema, options) ->
       return callback(err) if err isnt null
       rattleActivity.emit('addReplyToComment', self, userId, reply)
       callback(err, data)
+
+    return comment.comments[comment.comments.length - 1]._id
 
   schema.methods.removeComment = (userId, commentId, callback) ->
     comment = this.getComment(commentId)
@@ -126,7 +128,7 @@ module.exports = rattlePlugin = (schema, options) ->
       rattleActivity.emit('removeLike', self, userId)
       callback(err, data)
 
-  schema.methods.removeLikeToComment = (userId, commentId, callback) ->
+  schema.methods.removeLikeFromComment = (userId, commentId, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
 
@@ -138,7 +140,7 @@ module.exports = rattlePlugin = (schema, options) ->
     this.save (err, data) ->
       return callback(err) if err isnt null
       # => trigger removeLike activity
-      rattleActivity.emit('removeLikeToComment', self, userId, commentId)
+      rattleActivity.emit('removeLikeFromComment', self, userId, commentId)
       callback(err, data)
 
   schema.methods.getComment = (commentId) ->

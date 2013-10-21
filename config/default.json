@@ -1,5 +1,6 @@
 {
-  "ModelNames": {
-    "User": "User"
+  "mongooseRattle": {
+    "User":     "User",
+    "Activity": "Activity"
   }
 }

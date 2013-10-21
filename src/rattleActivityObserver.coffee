@@ -92,10 +92,10 @@ activityObserver.on 'removeLike', (object, userId) ->
   }).save()
   # send email
 
-activityObserver.on 'removeLikeToComment', (object, userId, commentId) ->
+activityObserver.on 'removeLikeFromComment', (object, userId, commentId) ->
   # save in activity collection
   new Activity({
-    action:        Activity.actions.removeLikeToComment
+    action:        Activity.actions.removeLikeFromComment
     objectId:      object._id
     objectName:    object.name
     targetId:      commentId

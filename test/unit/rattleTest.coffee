@@ -6,14 +6,9 @@ should   = require 'should'
 mongoose = require 'mongoose'
 fixtures = require 'pow-mongoose-fixtures'
 
-RattlePlugin = require '../../src/plugins/rattle'
+Thingy   = require '../models/thingy'
 
 ObjectId  = mongoose.Types.ObjectId;
-Schema   = mongoose.Schema
-
-ThingySchema = new Schema()
-ThingySchema.plugin RattlePlugin, name: 'thingy'
-Thingy = mongoose.model "Thingy", ThingySchema
 
 describe "Thingy", ->
   thingy = {}
@@ -249,14 +244,14 @@ describe "Thingy", ->
       thingy.save done
 
     it "should fails if comment doesn't exist", (done) ->
-      thingy.removeLikeToComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
+      thingy.removeLikeFromComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
         should.exists(err)
         done()
     it "should not affect current likes list if user didn'nt already liked", (done) ->
-      thingy.removeLikeToComment new ObjectId(), commentId, (err, updatedThingy) ->
+      thingy.removeLikeFromComment new ObjectId(), commentId, (err, updatedThingy) ->
         assert.equal 2, updatedThingy.getComment(commentId).likes.length
         done()
     it "should remove user like from likes list if user already liked", (done) ->
-      thingy.removeLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
+      thingy.removeLikeFromComment commentorUserId, commentId, (err, updatedThingy) ->
         assert.equal 1, updatedThingy.getComment(commentId).likes.length
         done()
