@@ -1,4 +1,5 @@
 mongoose = require 'mongoose'
+config   = require 'config'
 
 Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
@@ -19,7 +20,7 @@ ActivitySchema = new Schema(
   objectId:      type: ObjectId
   objectName:    type: String
   targetId:      type: ObjectId
-  actor:         type: ObjectId, ref: 'User', required: true
+  actor:         type: ObjectId, ref: config.ModelNames.User, required: true
   date:          type: Date, index: true
 )
 

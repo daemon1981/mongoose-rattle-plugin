@@ -1,4 +1,5 @@
 mongoose = require 'mongoose'
+config   = require 'config'
 
 Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
@@ -18,14 +19,14 @@ module.exports = rattlePlugin = (schema, options) ->
 
   CommentSchema.add
     message:       type: String, required: true, max: 2000, min: 1
-    likes:         [type: ObjectId, ref: 'User']
+    likes:         [type: ObjectId, ref: config.ModelNames.User]
     comments:      [CommentSchema]
-    creator:       type: ObjectId, ref: 'User', required: true
+    creator:       type: ObjectId, ref: config.ModelNames.User, required: true
 
   schema.add
-    creator:       type: ObjectId, ref: 'User', required: true
-    owner:         type: ObjectId, ref: 'User', required: true
-    likes:         [type: ObjectId, ref: 'User']
+    creator:       type: ObjectId, ref: config.ModelNames.User, required: true
+    owner:         type: ObjectId, ref: config.ModelNames.User, required: true
+    likes:         [type: ObjectId, ref: config.ModelNames.User]
     comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
