@@ -23,6 +23,8 @@ module.exports = rattlePlugin = (schema, options) ->
     creator:       type: ObjectId, ref: 'User', required: true
 
   schema.add
+    creator:       type: ObjectId, ref: 'User', required: true
+    owner:         type: ObjectId, ref: 'User', required: true
     likes:         [type: ObjectId, ref: 'User']
     comments:      [CommentSchema]
 
@@ -40,7 +42,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('addComment', self, userId, comment)
+      rattleActivity.emit('addComment', self, comment)
       callback(err, data)
 
     return this.comments[this.comments.length - 1]._id
@@ -58,10 +60,13 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('addReplyToComment', self, userId, commentId, reply)
+      rattleActivity.emit('addReplyToComment', self, userId, reply)
       callback(err, data)
 
   schema.methods.removeComment = (userId, commentId, callback) ->
+    comment = this.getComment(commentId)
+    return callback(new Error('Comment doesn\'t exist')) if !comment
+
     removeComment = (comments, commentId) ->
       comments = comments.filter (comment) ->
         return comment.creator isnt userId || comment._id isnt commentId
@@ -73,9 +78,11 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.comments = removeComment(this.comments, commentId)
 
+    self = this
+
     this.save (err, data) ->
       return callback(err) if err isnt null
-      # => trigger removeComment activity
+      rattleActivity.emit('removeComment', self, comment)
       callback(err, data)
 
   schema.methods.addLike = (userId, callback) ->
@@ -84,9 +91,11 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.likes.push userId if !hasAlreadyLiked
 
+    self = this
+
     this.save (err, data) ->
       return callback(err) if err isnt null
-      # => trigger addLike activity
+      rattleActivity.emit('addLike', self, userId)
       callback(err, data)
 
   schema.methods.addLikeToComment = (userId, commentId, callback) ->
@@ -98,18 +107,22 @@ module.exports = rattlePlugin = (schema, options) ->
 
     comment.likes.push userId  if !hasAlreadyLiked
 
+    self = this
+
     this.save (err, data) ->
       return callback(err) if err isnt null
-      # => trigger addLike activity
+      rattleActivity.emit('addLikeToComment', self, userId, commentId)
       callback(err, data)
 
   schema.methods.removeLike = (userId, callback) ->
     this.likes = this.likes.filter (likeUserId) ->
       return likeUserId isnt userId
 
+    self = this
+
     this.save (err, data) ->
       return callback(err) if err isnt null
-      # => trigger removeLike activity
+      rattleActivity.emit('removeLike', self, userId)
       callback(err, data)
 
   schema.methods.removeLikeToComment = (userId, commentId, callback) ->
@@ -119,9 +132,12 @@ module.exports = rattlePlugin = (schema, options) ->
     comment.likes = comment.likes.filter (likeUserId) ->
       return likeUserId isnt userId
 
+    self = this
+
     this.save (err, data) ->
       return callback(err) if err isnt null
       # => trigger removeLike activity
+      rattleActivity.emit('removeLikeToComment', self, userId, commentId)
       callback(err, data)
 
   schema.methods.getComment = (commentId) ->

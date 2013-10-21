@@ -18,12 +18,13 @@ Thingy = mongoose.model "Thingy", ThingySchema
 describe "Thingy", ->
   thingy = {}
   commentorUserId = new ObjectId()
+  objectCreatorUserId = new ObjectId()
 
   beforeEach (done) ->
     async.series [(callback) ->
       Thingy.remove callback
     , (callback) ->
-      new Thingy().save (err, thingySaved) ->
+      new Thingy({creator: objectCreatorUserId, owner: objectCreatorUserId}).save (err, thingySaved) ->
         thingy = thingySaved
         callback()
     ], done
@@ -116,8 +117,12 @@ describe "Thingy", ->
       commentIds['level 3'] = thingy.comments[0].comments[0].comments[0]._id
       thingy.save done
 
+    it "should fails if comment doesn't exist", (done) ->
+      thingy.removeComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
+        should.exists(err)
+        done()
     describe 'when user is the not creator', ->
-      it "should fails", (done) ->
+      it "should not remove comment", (done) ->
         thingy.removeComment 'n0t3x1t1n9', commentIds['level 1'], (err, updatedThingy) ->
           should.exists(updatedThingy)
           should.exists(updatedThingy.getComment(commentIds['level 1']))
