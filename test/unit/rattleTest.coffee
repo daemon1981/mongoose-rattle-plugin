@@ -6,7 +6,7 @@ should   = require 'should'
 mongoose = require 'mongoose'
 fixtures = require 'pow-mongoose-fixtures'
 
-RattlePlugin = require '../../plugins/rattle'
+RattlePlugin = require '../../src/plugins/rattle'
 
 ObjectId  = mongoose.Types.ObjectId;
 Schema   = mongoose.Schema
