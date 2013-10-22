@@ -22,6 +22,8 @@ module.exports = rattlePlugin = (schema, options) ->
     message:       type: String, required: true, max: 2000, min: 1
     likes:         [type: ObjectId, ref: config.mongooseRattle.User]
     comments:      [CommentSchema]
+    dateCreation:  type: Date
+    dateUpdate:    type: Date
     creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
 
   schema.add
@@ -46,6 +48,8 @@ module.exports = rattlePlugin = (schema, options) ->
     comment =
       message:       message
       creator:       userId
+      dateCreation:  moment().toDate()
+      dateUpdate:    moment().toDate()
     this.comments.push(comment)
 
     this.save (err, data) ->
@@ -64,6 +68,8 @@ module.exports = rattlePlugin = (schema, options) ->
     reply =
       message:       message
       creator:       userId
+      dateCreation:  moment().toDate()
+      dateUpdate:    moment().toDate()
     comment.comments.push(reply)
 
     this.save (err, data) ->

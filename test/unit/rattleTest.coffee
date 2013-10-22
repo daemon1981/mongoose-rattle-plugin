@@ -29,8 +29,9 @@ describe "Thingy", ->
         clock.restore()
         done()
     it "should only update dateUpdate when updating", (done) ->
+      clock = sinon.useFakeTimers(new Date(2011, 0, 1, 1, 1, 36).getTime())
       new Thingy(creator: objectCreatorUserId, owner: objectCreatorUserId).save (err, thingySaved) ->
-        clock = sinon.useFakeTimers()
+        clock = sinon.useFakeTimers(new Date(2012, 0, 1, 1, 1, 36).getTime())
         thingySaved.save (err, thingySaved) ->
           assert.notDeepEqual(new Date(), thingySaved.dateCreation)
           assert.deepEqual(new Date(), thingySaved.dateUpdate)
@@ -103,6 +104,12 @@ describe "Thingy", ->
             should.exists(updatedThingy)
             assert.equal(1, updatedThingy.comments.length)
             done()
+      it "should update dateCreation and dateUpdated", (done) ->
+        clock = sinon.useFakeTimers()
+        commentId = thingy.addComment commentorUserId, 'dummy message', (err, updatedThingy) ->
+          assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateCreation);
+          clock = sinon.restore()
+          done()
 
     describe "When removing a comment", ->
       level1Msg = 'level1 message'
