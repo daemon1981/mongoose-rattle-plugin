@@ -3,14 +3,14 @@ moment = require 'moment'
 
 Activity = require './model/activity'
 
-activityObserver = new events.EventEmitter()
+rattleActivity = new events.EventEmitter()
 
-activityObserver.mailer = null
+rattleActivity.mailer = null
 
-activityObserver.on 'update', (object) ->
+rattleActivity.on 'objectCreation', (object) ->
   # save in activity collection
   new Activity({
-    action:        Activity.actions.update
+    action:        Activity.actions.objectCreation
     objectId:      object._id
     objectName:    object.name
     targetId:      object._id
@@ -19,10 +19,10 @@ activityObserver.on 'update', (object) ->
   }).save()
   # send email
 
-activityObserver.on 'addComment', (object, message) ->
+rattleActivity.on 'addComment', (object, message) ->
   # save in activity collection
   new Activity({
-    action:        Activity.actions.update
+    action:        Activity.actions.addComment
     objectId:      object._id
     objectName:    object.name
     targetId:      message._id
@@ -32,7 +32,7 @@ activityObserver.on 'addComment', (object, message) ->
   # send email
   # this.sendEmail('addComment', object, message)
 
-activityObserver.on 'addReplyToComment', (object, commentId, reply) ->
+rattleActivity.on 'addReplyToComment', (object, commentId, reply) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.addReplyToComment
@@ -44,7 +44,7 @@ activityObserver.on 'addReplyToComment', (object, commentId, reply) ->
   }).save()
   # send email
 
-activityObserver.on 'removeComment', (object, message) ->
+rattleActivity.on 'removeComment', (object, message) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.removeComment
@@ -56,7 +56,7 @@ activityObserver.on 'removeComment', (object, message) ->
   }).save()
   # send email
 
-activityObserver.on 'addLike', (object, userId) ->
+rattleActivity.on 'addLike', (object, userId) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.addLike
@@ -68,7 +68,7 @@ activityObserver.on 'addLike', (object, userId) ->
   }).save()
   # send email
 
-activityObserver.on 'addLikeToComment', (object, userId, commentId) ->
+rattleActivity.on 'addLikeToComment', (object, userId, commentId) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.addLikeToComment
@@ -80,7 +80,7 @@ activityObserver.on 'addLikeToComment', (object, userId, commentId) ->
   }).save()
   # send email
 
-activityObserver.on 'removeLike', (object, userId) ->
+rattleActivity.on 'removeLike', (object, userId) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.removeLike
@@ -92,7 +92,7 @@ activityObserver.on 'removeLike', (object, userId) ->
   }).save()
   # send email
 
-activityObserver.on 'removeLikeFromComment', (object, userId, commentId) ->
+rattleActivity.on 'removeLikeFromComment', (object, userId, commentId) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.removeLikeFromComment
@@ -104,10 +104,10 @@ activityObserver.on 'removeLikeFromComment', (object, userId, commentId) ->
   }).save()
   # send email
 
-activityObserver.setMailer = (mailer) ->
+rattleActivity.setMailer = (mailer) ->
   @mailer = mailer
 
-activityObserver.getMailer = ->
+rattleActivity.getMailer = ->
   @mailer
 
-module.exports = activityObserver
+module.exports = rattleActivity

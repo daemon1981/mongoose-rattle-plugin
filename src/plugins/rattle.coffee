@@ -4,7 +4,7 @@ config   = require 'config'
 Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
 
-rattleActivity = require '../rattleActivityObserver'
+rattleActivity = require '../rattleActivity'
 
 module.exports = rattlePlugin = (schema, options) ->
   throw new Error('You must specify the name of the rattle object') if !options or !options.name
@@ -30,7 +30,7 @@ module.exports = rattlePlugin = (schema, options) ->
     comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
-    rattleActivity.emit('update', this)
+    rattleActivity.emit('objectCreation', this) if this.isNew
     next()
 
   schema.methods.addComment = (userId, message, callback) ->

@@ -5,7 +5,7 @@ Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
 
 actions = [
-  'update',
+  'objectCreation',
   'addComment',
   'addReplyToComment',
   'removeComment',
@@ -25,7 +25,7 @@ ActivitySchema = new Schema(
 )
 
 ActivitySchema.statics.actions =
-  update:                actions[0]
+  objectCreation:        actions[0]
   addComment:            actions[1]
   addReplyToComment:     actions[2]
   removeComment:         actions[3]
