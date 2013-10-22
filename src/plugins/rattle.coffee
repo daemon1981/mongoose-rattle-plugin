@@ -1,5 +1,6 @@
 mongoose = require 'mongoose'
 config   = require 'config'
+moment   = require 'moment'
 
 Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
@@ -26,11 +27,17 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.add
     creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
     owner:         type: ObjectId, ref: config.mongooseRattle.User, required: true
+    dateCreation:  type: Date
+    dateUpdate:    type: Date
     likes:         [type: ObjectId, ref: config.mongooseRattle.User]
     comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
-    rattleActivity.emit('objectCreation', this) if this.isNew
+    if this.isNew
+      rattleActivity.emit('objectCreation', this)
+      this.dateCreation = moment().toDate()
+
+    this.dateUpdate = moment().toDate()
     next()
 
   schema.methods.addComment = (userId, message, callback) ->
