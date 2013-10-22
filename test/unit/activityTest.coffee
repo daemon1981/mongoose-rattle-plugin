@@ -1,14 +1,15 @@
 require '../bootstrap'
 
-async    = require 'async'
-assert   = require 'assert'
-should   = require 'should'
-mongoose = require 'mongoose'
-fixtures = require 'pow-mongoose-fixtures'
+async     = require 'async'
+assert    = require 'assert'
+should    = require 'should'
+mongoose  = require 'mongoose'
+fixtures  = require 'pow-mongoose-fixtures'
 
-Thingy   = require '../models/thingy'
-User     = require '../models/user'
-Activity = require '../../src/model/activity'
+Thingy    = require '../models/thingy'
+Thingummy = require '../models/thingummy'
+User      = require '../models/user'
+Activity  = require '../../src/model/activity'
 
 ObjectId  = mongoose.Types.ObjectId;
 
@@ -30,7 +31,7 @@ describe "Activity", ->
     , addPlayingUser = (objectCreatorUserSaved, saveResult, callback) ->
       objectCreatorUser = objectCreatorUserSaved
       new User().save callback
-    , addThingy = (playingUserSaved, saveResult, callback) ->
+    , addThingyFromObjectCreator = (playingUserSaved, saveResult, callback) ->
       playingUser = playingUserSaved
       new Thingy({creator: objectCreatorUser._id, owner: objectCreatorUser._id}).save callback
     , addCommentFromPlayingUser = (thingy, saveResult, callback) ->
@@ -48,8 +49,11 @@ describe "Activity", ->
       thingy.addLike objectCreatorUser._id, callback
     , addLikeToCommentFromObjectCreatorUser = (thingy, callback) ->
       thingy.addLikeToComment playingUser._id, message3Id, callback
+    , addThingyFromPlayingUser = (thingy, callback) ->
+      new Thingummy({creator: playingUser._id, owner: playingUser._id}).save callback
     ], (err, thingySaved) ->
       thingy = thingySaved
       done()
 
-  it 'plop'
+  it 'get activities on objectCreation of type thingy'
+  it 'get activities on addComment'
