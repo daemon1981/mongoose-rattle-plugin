@@ -107,9 +107,46 @@ describe "Thingy", ->
       it "should update dateCreation and dateUpdated", (done) ->
         clock = sinon.useFakeTimers()
         commentId = thingy.addComment commentorUserId, 'dummy message', (err, updatedThingy) ->
-          assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateCreation);
+          assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateCreation)
+          assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateUpdate)
           clock = sinon.restore()
           done()
+
+    describe "When editing a comment", ->
+      commentId = null
+      updatedMessage = 'dummy message updated'
+      beforeEach (done) ->
+        clock = sinon.useFakeTimers(new Date(2011, 0, 1, 1, 1, 36).getTime())
+        commentId = thingy.addComment commentorUserId, 'dummy message', (err) ->
+          clock = sinon.restore()
+          done()
+
+      it "should fails if message length is out of min and max", (done) ->
+        thingy.editComment commentorUserId, commentId, '', (err) ->
+          should.exists(err)
+          done()
+      describe 'when user is the not creator', ->
+        it "should fails", (done) ->
+          thingy.editComment 'n0t3x1t1n9', commentId, updatedMessage, (err) ->
+            should.exists(err)
+            done()
+      describe 'when user is the creator', ->
+        it "should edit comment and return comment id if user is the owner", (done) ->
+          thingy.editComment commentorUserId, commentId, updatedMessage, (err) ->
+            should.not.exists(err)
+            should.exists(commentId)
+            Thingy.findById thingy._id, (err, updatedThingy) ->
+              should.exists(updatedThingy)
+              assert.equal(1, updatedThingy.comments.length)
+              assert.equal(updatedMessage, updatedThingy.comments[0].message)
+              done()
+        it "should update dateCreation and dateUpdated", (done) ->
+          clock = sinon.useFakeTimers(new Date(2012, 0, 1, 1, 1, 36).getTime())
+          thingy.editComment commentorUserId, commentId, updatedMessage, (err, updatedThingy) ->
+            assert.notDeepEqual(new Date(), updatedThingy.getComment(commentId).dateCreation)
+            assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateUpdate)
+            clock = sinon.restore()
+            done()
 
     describe "When removing a comment", ->
       level1Msg = 'level1 message'

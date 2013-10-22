@@ -79,6 +79,23 @@ module.exports = rattlePlugin = (schema, options) ->
 
     return comment.comments[comment.comments.length - 1]._id
 
+  schema.methods.editComment = (userId, commentId, message, callback) ->
+    comment = this.getComment(commentId)
+    return callback(new Error('Comment doesn\'t exist')) if !comment
+    return callback(new Error('Only owner can edit comment')) if comment.creator isnt userId
+
+    comment.message    = message
+    comment.dateUpdate = moment().toDate()
+
+    self = this
+
+    this.save (err, data) ->
+      return callback(err) if err isnt null
+      rattleActivity.emit('editComment', self, comment)
+      callback(err, data)
+
+    return this.comments[this.comments.length - 1]._id
+
   schema.methods.removeComment = (userId, commentId, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
