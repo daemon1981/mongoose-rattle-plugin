@@ -20,11 +20,11 @@ module.exports = rattlePlugin = (schema, options) ->
 
   CommentSchema.add
     message:       type: String, required: true, max: 2000, min: 1
+    creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
     likes:         [type: ObjectId, ref: config.mongooseRattle.User]
     comments:      [CommentSchema]
     dateCreation:  type: Date
     dateUpdate:    type: Date
-    creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
 
   schema.add
     creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
@@ -100,16 +100,15 @@ module.exports = rattlePlugin = (schema, options) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
 
-    removeComment = (comments, commentId) ->
+    parseComments = (comments) ->
       comments = comments.filter (comment) ->
-        return comment.creator isnt userId || comment._id isnt commentId
-
-      for reply in comments
-        reply.comments = removeComment(reply.comments, commentId)
+        toKeep = comment.creator isnt userId || comment._id isnt commentId
+        comment.comments = parseComments(comment.comments, comment._id) if toKeep is true
+        return toKeep
 
       return comments
 
-    this.comments = removeComment(this.comments, commentId)
+    this.comments = parseComments(this.comments)
 
     self = this
 

@@ -125,7 +125,7 @@ describe "Thingy", ->
         thingy.editComment commentorUserId, commentId, '', (err) ->
           should.exists(err)
           done()
-      describe 'when user is the not creator', ->
+      describe 'when user is not the creator', ->
         it "should fails", (done) ->
           thingy.editComment 'n0t3x1t1n9', commentId, updatedMessage, (err) ->
             should.exists(err)
@@ -179,7 +179,7 @@ describe "Thingy", ->
         thingy.removeComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
           should.exists(err)
           done()
-      describe 'when user is the not creator', ->
+      describe 'when user is not the creator', ->
         it "should not remove comment", (done) ->
           thingy.removeComment 'n0t3x1t1n9', commentIds['level 1'], (err, updatedThingy) ->
             should.exists(updatedThingy)
@@ -191,12 +191,12 @@ describe "Thingy", ->
             should.exists(updatedThingy)
             should.not.exists(updatedThingy.getComment(commentIds['level 1']))
             done()
-        it.skip "should remove comment of level2", (done) ->
+        it "should remove comment of level2", (done) ->
           thingy.removeComment commentorUserId, commentIds['level 2'], (err, updatedThingy) ->
             should.exists(updatedThingy)
             should.not.exists(updatedThingy.getComment(commentIds['level 2']))
             done()
-        it.skip "should remove comment of level3", (done) ->
+        it "should remove comment of level3", (done) ->
           thingy.removeComment commentorUserId, commentIds['level 3'], (err, updatedThingy) ->
             should.exists(updatedThingy)
             should.not.exists(updatedThingy.getComment(commentIds['level 3']))
