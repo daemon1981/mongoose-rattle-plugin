@@ -20,8 +20,10 @@ describe "Activity", ->
   message1Id = message2Id = message3Id = null
 
   before (done) ->
-    async.waterfall [removeThingy = (callback) ->
+    async.waterfall [removeThingies = (callback) ->
       Thingy.remove callback
+    removeThingummies = (removeResult, callback) ->
+      Thingummy.remove callback
     , removeUsers = (removeResult, callback) ->
       User.remove callback
     , removeActivities = (removeResult, callback) ->
@@ -55,5 +57,13 @@ describe "Activity", ->
       thingy = thingySaved
       done()
 
-  it 'get activities on objectCreation of type thingy'
-  it 'get activities on addComment'
+  it 'should save all activities', (done) ->
+    Activity.find (err, activities) ->
+      should.not.exists(err)
+      assert.equal 8, activities.length
+      done()
+  it 'get activities on objectCreation of type thingy', (done) ->
+    Activity.findByObjectNameAndAction 'Thingy', Activity.actions.objectCreation, (err, activities) ->
+      should.not.exists(err)
+      assert.equal 1, activities.length
+      done()

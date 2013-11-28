@@ -9,6 +9,7 @@ mongoose = require 'mongoose'
 fixtures = require 'pow-mongoose-fixtures'
 
 Thingy   = require '../models/thingy'
+Activity = require '../../src/model/activity'
 
 ObjectId  = mongoose.Types.ObjectId;
 

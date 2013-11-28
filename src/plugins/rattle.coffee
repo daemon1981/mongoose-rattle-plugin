@@ -5,11 +5,9 @@ moment   = require 'moment'
 Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
 
-rattleActivity = require '../rattleActivity'
+Activity = require '../model/activity'
 
 module.exports = rattlePlugin = (schema, options) ->
-  throw new Error('You must specify the name of the rattle object') if !options or !options.name
-
   # Schema strategies for embedded comments
   #
   # http://docs.mongodb.org/ecosystem/use-cases/storing-comments/
@@ -36,7 +34,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
   schema.pre "save", (next) ->
     if this.isNew
-      rattleActivity.emit('objectCreation', this)
+      Activity.emit('objectCreation', this)
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
@@ -54,7 +52,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('addComment', self, comment)
+      Activity.emit('addComment', self, comment)
       callback(err, data)
 
     return this.comments[this.comments.length - 1]._id
@@ -74,7 +72,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('addReplyToComment', self, userId, reply)
+      Activity.emit('addReplyToComment', self, userId, reply)
       callback(err, data)
 
     return comment.comments[comment.comments.length - 1]._id
@@ -91,7 +89,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('editComment', self, comment)
+      Activity.emit('editComment', self, comment)
       callback(err, data)
 
     return this.comments[this.comments.length - 1]._id
@@ -114,7 +112,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('removeComment', self, comment)
+      Activity.emit('removeComment', self, comment)
       callback(err, data)
 
   schema.methods.addLike = (userId, callback) ->
@@ -127,7 +125,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('addLike', self, userId)
+      Activity.emit('addLike', self, userId)
       callback(err, data)
 
   schema.methods.addLikeToComment = (userId, commentId, callback) ->
@@ -143,7 +141,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('addLikeToComment', self, userId, commentId)
+      Activity.emit('addLikeToComment', self, userId, commentId)
       callback(err, data)
 
   schema.methods.removeLike = (userId, callback) ->
@@ -154,7 +152,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      rattleActivity.emit('removeLike', self, userId)
+      Activity.emit('removeLike', self, userId)
       callback(err, data)
 
   schema.methods.removeLikeFromComment = (userId, commentId, callback) ->
@@ -169,7 +167,7 @@ module.exports = rattlePlugin = (schema, options) ->
     this.save (err, data) ->
       return callback(err) if err isnt null
       # => trigger removeLike activity
-      rattleActivity.emit('removeLikeFromComment', self, userId, commentId)
+      Activity.emit('removeLikeFromComment', self, userId, commentId)
       callback(err, data)
 
   schema.methods.getComment = (commentId) ->
