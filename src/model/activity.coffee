@@ -73,7 +73,7 @@ Activity.on 'addComment', (object, message) ->
   # send email
   # this.sendEmail('addComment', object, message)
 
-Activity.on 'addReplyToComment', (object, commentId, reply) ->
+Activity.on 'addReplyToComment', (object, reply) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.addReplyToComment
@@ -109,7 +109,7 @@ Activity.on 'addLike', (object, userId) ->
   }).save()
   # send email
 
-Activity.on 'addLikeToComment', (object, userId, commentId) ->
+Activity.on 'addLikeToComment', (object, commentId, userId) ->
   # save in activity collection
   new Activity({
     action:        Activity.actions.addLikeToComment

@@ -72,7 +72,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('addReplyToComment', self, userId, reply)
+      Activity.emit('addReplyToComment', self, reply)
       callback(err, data)
 
     return comment.comments[comment.comments.length - 1]._id
@@ -141,7 +141,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('addLikeToComment', self, userId, commentId)
+      Activity.emit('addLikeToComment', self, commentId, userId)
       callback(err, data)
 
   schema.methods.removeLike = (userId, callback) ->
