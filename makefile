@@ -3,7 +3,7 @@ REPORTER = dot
 check: test
 
 test:
-	@NODE_ENV=test ./node_modules/.bin/mocha \
+	@NODE_ENV=test ./node_modules/.bin/mocha $(T) \
 		--compilers coffee:coffee-script \
 		--recursive \
 		--reporter $(REPORTER) \

@@ -1,5 +1,5 @@
 {
-  "name": "mongoose-rattle",
+  "name": "mongoose-rattle-plugin",
   "description": "Add social interactions to mongoose schema",
   "version": "0.0.1",
   "author": "Damien Saillard",
@@ -20,8 +20,14 @@
     "nodeJs"
     , "MongooseJs"
   ],
-  "repository": "git@github.com:daemon1981/mongoose-rattle.git",
-  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:daemon1981/mongoose-rattle-plugin.git"
+  },
+  "engines": {
+    "node": ">0.8"
+  },
+  "main": "lib/index.js",
   "scripts": {
     "test": "make test",
     "prepublish": "./node_modules/.bin/coffee -c -o ./lib/ src/"
