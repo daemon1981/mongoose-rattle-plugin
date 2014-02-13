@@ -1,7 +1,7 @@
 {
   "name": "mongoose-rattle-plugin",
   "description": "Add social interactions to mongoose schema",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Damien Saillard",
   "dependencies": {
     "mongoose": "3.6.13"
