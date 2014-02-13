@@ -1,13 +1,13 @@
 mongoose = require 'mongoose'
-config   = require 'config'
 moment   = require 'moment'
 
 Schema   = mongoose.Schema
 ObjectId = Schema.Types.ObjectId
 
-Activity = require '../model/activity'
-
 module.exports = rattlePlugin = (schema, options) ->
+  options = {} if (!options)
+  options.UserShemaName = 'User' if (!options.UserShemaName)
+
   # Schema strategies for embedded comments
   #
   # http://docs.mongodb.org/ecosystem/use-cases/storing-comments/
@@ -18,27 +18,32 @@ module.exports = rattlePlugin = (schema, options) ->
 
   CommentSchema.add
     message:       type: String, required: true, max: 2000, min: 1
-    creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
-    likes:         [type: ObjectId, ref: config.mongooseRattle.User]
+    creator:       type: ObjectId, ref: options.UserShemaName, required: true
+    likes:         [type: ObjectId, ref: options.UserShemaName]
     comments:      [CommentSchema]
     dateCreation:  type: Date
     dateUpdate:    type: Date
 
   schema.add
-    creator:       type: ObjectId, ref: config.mongooseRattle.User, required: true
-    owner:         type: ObjectId, ref: config.mongooseRattle.User, required: true
+    creator:       type: ObjectId, ref: options.UserShemaName, required: true
+    owner:         type: ObjectId, ref: options.UserShemaName, required: true
     dateCreation:  type: Date
     dateUpdate:    type: Date
-    likes:         [type: ObjectId, ref: config.mongooseRattle.User]
+    likes:         [type: ObjectId, ref: options.UserShemaName]
     comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
     if this.isNew
-      Activity.emit('objectCreation', this)
+      # emit objectCreation event with information on object, targetId, actor
+      this.emit('objectCreation', this, this._id, this.owner)
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
     next()
+
+  schema.methods.emit = (event, object, target, extra) ->
+    if options.emitter
+      options.emitter.emit(event, object, target, extra)
 
   schema.methods.addComment = (userId, message, callback) ->
     self = this
@@ -52,7 +57,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('addComment', self, comment)
+      # emit addComment event with information on object, targetId, actor
+      self.emit('addComment', self, comment._id, userId)
       callback(err, data)
 
     return this.comments[this.comments.length - 1]._id
@@ -72,7 +78,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('addReplyToComment', self, reply)
+      # emit addReplyToComment event with information on object, targetId, actor
+      self.emit('addReplyToComment', self, reply._id, userId)
       callback(err, data)
 
     return comment.comments[comment.comments.length - 1]._id
@@ -89,7 +96,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('editComment', self, comment)
+      # emit editComment event with information on object, targetId, actor
+      self.emit('editComment', self, comment._id, userId)
       callback(err, data)
 
     return this.comments[this.comments.length - 1]._id
@@ -112,7 +120,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('removeComment', self, comment)
+      # emit removeComment event with information on object, targetId, actor
+      self.emit('removeComment', self, self._id, userId)
       callback(err, data)
 
   schema.methods.addLike = (userId, callback) ->
@@ -125,7 +134,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('addLike', self, userId)
+      # emit addLike event with information on object, targetId, actor
+      self.emit('addLike', self, userId, userId)
       callback(err, data)
 
   schema.methods.addLikeToComment = (userId, commentId, callback) ->
@@ -141,7 +151,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('addLikeToComment', self, commentId, userId)
+      # emit addLikeToComment event with information on object, targetId, actor
+      self.emit('addLikeToComment', self, commentId, userId)
       callback(err, data)
 
   schema.methods.removeLike = (userId, callback) ->
@@ -152,7 +163,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      Activity.emit('removeLike', self, userId)
+      # emit removeLike event with information on object, targetId, actor
+      self.emit('removeLike', self, userId, userId)
       callback(err, data)
 
   schema.methods.removeLikeFromComment = (userId, commentId, callback) ->
@@ -166,8 +178,8 @@ module.exports = rattlePlugin = (schema, options) ->
 
     this.save (err, data) ->
       return callback(err) if err isnt null
-      # => trigger removeLike activity
-      Activity.emit('removeLikeFromComment', self, userId, commentId)
+      # emit removeLike event with information on object, targetId, actor
+      self.emit('removeLikeFromComment', self, userId, commentId)
       callback(err, data)
 
   schema.methods.getComment = (commentId) ->

@@ -1,6 +1,0 @@
-{
-  "mongooseRattle": {
-    "User":     "User",
-    "Activity": "Activity"
-  }
-}

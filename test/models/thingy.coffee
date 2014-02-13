@@ -2,7 +2,7 @@ mongoose = require 'mongoose'
 
 Schema   = mongoose.Schema
 
-RattlePlugin = require '../../src/plugins/rattle'
+RattlePlugin = require '../../src/index'
 
 ThingySchema = new Schema()
 ThingySchema.plugin RattlePlugin, name: 'thingy'
