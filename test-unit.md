@@ -1,28 +1,27 @@
 # TOC
-   - [Thingy](#thingy)
-     - [When saving](#thingy-when-saving)
-     - [Playing rattle](#thingy-playing-rattle)
-       - [When getting a comment](#thingy-playing-rattle-when-getting-a-comment)
-       - [When adding a comment](#thingy-playing-rattle-when-adding-a-comment)
-       - [When editing a comment](#thingy-playing-rattle-when-editing-a-comment)
-         - [when user is not the creator](#thingy-playing-rattle-when-editing-a-comment-when-user-is-not-the-creator)
-         - [when user is the creator](#thingy-playing-rattle-when-editing-a-comment-when-user-is-the-creator)
-       - [When removing a comment](#thingy-playing-rattle-when-removing-a-comment)
-         - [when user is not the creator](#thingy-playing-rattle-when-removing-a-comment-when-user-is-not-the-creator)
-         - [when user is the creator](#thingy-playing-rattle-when-removing-a-comment-when-user-is-the-creator)
-       - [When adding a user like](#thingy-playing-rattle-when-adding-a-user-like)
-       - [When removing a user like](#thingy-playing-rattle-when-removing-a-user-like)
-       - [When adding a reply to a comment](#thingy-playing-rattle-when-adding-a-reply-to-a-comment)
-       - [When adding a user like to a comment](#thingy-playing-rattle-when-adding-a-user-like-to-a-comment)
-       - [When removing a user like from a comment](#thingy-playing-rattle-when-removing-a-user-like-from-a-comment)
-   - [Activity](#activity)
+   - [MongooseRattlePlugin](#mongooserattleplugin)
+     - [document.save(callback)](#mongooserattleplugin-documentsavecallback)
+     - [Plugin methods](#mongooserattleplugin-plugin-methods)
+       - [document.getComment(commentId)](#mongooserattleplugin-plugin-methods-documentgetcommentcommentid)
+       - [document.addComment(userId, message, callback)](#mongooserattleplugin-plugin-methods-documentaddcommentuserid-message-callback)
+       - [document.editComment(userId, commentId, message, callback)](#mongooserattleplugin-plugin-methods-documenteditcommentuserid-commentid-message-callback)
+         - [when user is not the creator](#mongooserattleplugin-plugin-methods-documenteditcommentuserid-commentid-message-callback-when-user-is-not-the-creator)
+         - [when user is the creator](#mongooserattleplugin-plugin-methods-documenteditcommentuserid-commentid-message-callback-when-user-is-the-creator)
+       - [document.removeComment(userId, commentId, callback)](#mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback)
+         - [when user is not the creator](#mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback-when-user-is-not-the-creator)
+         - [when user is the creator](#mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback-when-user-is-the-creator)
+       - [document.addLike(userId, callback)](#mongooserattleplugin-plugin-methods-documentaddlikeuserid-callback)
+       - [document.removeLike(userId, callback)](#mongooserattleplugin-plugin-methods-documentremovelikeuserid-callback)
+       - [document.addReplyToComment(userId, commentId, message, callback)](#mongooserattleplugin-plugin-methods-documentaddreplytocommentuserid-commentid-message-callback)
+       - [document.addLikeToComment(userId, commentId, callback)](#mongooserattleplugin-plugin-methods-documentaddliketocommentuserid-commentid-callback)
+       - [document.removeLikeFromComment(userId, commentId, callback)](#mongooserattleplugin-plugin-methods-documentremovelikefromcommentuserid-commentid-callback)
 <a name=""></a>
 
-<a name="thingy"></a>
-# Thingy
-<a name="thingy-when-saving"></a>
-## When saving
-should update dateCreation and dateUpdate when inserting.
+<a name="mongooserattleplugin"></a>
+# MongooseRattlePlugin
+<a name="mongooserattleplugin-documentsavecallback"></a>
+## document.save(callback)
+update dateCreation and dateUpdate when inserting.
 
 ```js
 var clock;
@@ -38,7 +37,7 @@ return new Thingy({
 });
 ```
 
-should only update dateUpdate when updating.
+only update dateUpdate when updating.
 
 ```js
 var clock;
@@ -57,48 +56,39 @@ return new Thingy({
 });
 ```
 
-<a name="thingy-playing-rattle"></a>
-## Playing rattle
-<a name="thingy-playing-rattle-when-getting-a-comment"></a>
-### When getting a comment
-should retrieve null if comment doesn't exist.
+<a name="mongooserattleplugin-plugin-methods"></a>
+## Plugin methods
+<a name="mongooserattleplugin-plugin-methods-documentgetcommentcommentid"></a>
+### document.getComment(commentId)
+retrieve null if comment doesn't exist.
 
 ```js
 return assert.equal(null, thingy.getComment('n0t3x1t1n9'));
 ```
 
-should be able to retrieve a simple level comment.
+can retrieve a simple level comment.
 
 ```js
 assert.equal(level1UserOneMsg, thingy.getComment(commentIds['level 1 ' + userOneId]).message);
 return assert.equal(level1UserTwoMsg, thingy.getComment(commentIds['level 1 ' + userTwoId]).message);
 ```
 
-should be able to retrieve a second level comment.
+can retrieve a second level comment.
 
 ```js
 assert.equal(level2UserOneMsg, thingy.getComment(commentIds['level 2 ' + userOneId]).message);
 return assert.equal(level2UserTwoMsg, thingy.getComment(commentIds['level 2 ' + userTwoId]).message);
 ```
 
-should be able to retrieve a third level comment.
+can retrieve a third level comment.
 
 ```js
 return assert.equal(level3UserTwoMsg, thingy.getComment(commentIds['level 3 ' + userOneId]).message);
 ```
 
-<a name="thingy-playing-rattle-when-adding-a-comment"></a>
-### When adding a comment
-should fails if message length is out of min and max.
-
-```js
-return thingy.addComment(commentorUserId, '', function(err) {
-  should.exists(err);
-  return done();
-});
-```
-
-should append a new comment and return comment id.
+<a name="mongooserattleplugin-plugin-methods-documentaddcommentuserid-message-callback"></a>
+### document.addComment(userId, message, callback)
+append a new comment and return comment id.
 
 ```js
 var commentId;
@@ -113,7 +103,7 @@ return commentId = thingy.addComment(commentorUserId, 'dummy message', function(
 });
 ```
 
-should update dateCreation and dateUpdated.
+update dateCreation and dateUpdated.
 
 ```js
 var clock, commentId;
@@ -126,9 +116,18 @@ return commentId = thingy.addComment(commentorUserId, 'dummy message', function(
 });
 ```
 
-<a name="thingy-playing-rattle-when-editing-a-comment"></a>
-### When editing a comment
-should fails if message length is out of min and max.
+fails if message length is out of min and max.
+
+```js
+return thingy.addComment(commentorUserId, '', function(err) {
+  should.exists(err);
+  return done();
+});
+```
+
+<a name="mongooserattleplugin-plugin-methods-documenteditcommentuserid-commentid-message-callback"></a>
+### document.editComment(userId, commentId, message, callback)
+fails if message length is out of min and max.
 
 ```js
 return thingy.editComment(commentorUserId, commentId, '', function(err) {
@@ -137,9 +136,9 @@ return thingy.editComment(commentorUserId, commentId, '', function(err) {
 });
 ```
 
-<a name="thingy-playing-rattle-when-editing-a-comment-when-user-is-not-the-creator"></a>
+<a name="mongooserattleplugin-plugin-methods-documenteditcommentuserid-commentid-message-callback-when-user-is-not-the-creator"></a>
 #### when user is not the creator
-should fails.
+always fails.
 
 ```js
 return thingy.editComment('n0t3x1t1n9', commentId, updatedMessage, function(err) {
@@ -148,9 +147,9 @@ return thingy.editComment('n0t3x1t1n9', commentId, updatedMessage, function(err)
 });
 ```
 
-<a name="thingy-playing-rattle-when-editing-a-comment-when-user-is-the-creator"></a>
+<a name="mongooserattleplugin-plugin-methods-documenteditcommentuserid-commentid-message-callback-when-user-is-the-creator"></a>
 #### when user is the creator
-should edit comment and return comment id if user is the owner.
+edit comment and return comment id if user is the owner.
 
 ```js
 return thingy.editComment(commentorUserId, commentId, updatedMessage, function(err) {
@@ -165,7 +164,7 @@ return thingy.editComment(commentorUserId, commentId, updatedMessage, function(e
 });
 ```
 
-should update dateCreation and dateUpdated.
+update dateCreation and dateUpdated.
 
 ```js
 var clock;
@@ -178,9 +177,9 @@ return thingy.editComment(commentorUserId, commentId, updatedMessage, function(e
 });
 ```
 
-<a name="thingy-playing-rattle-when-removing-a-comment"></a>
-### When removing a comment
-should fails if comment doesn't exist.
+<a name="mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback"></a>
+### document.removeComment(userId, commentId, callback)
+fails if comment doesn't exist.
 
 ```js
 return thingy.removeComment(commentorUserId, 'n0t3x1t1n9', function(err, updatedThingy) {
@@ -189,9 +188,9 @@ return thingy.removeComment(commentorUserId, 'n0t3x1t1n9', function(err, updated
 });
 ```
 
-<a name="thingy-playing-rattle-when-removing-a-comment-when-user-is-not-the-creator"></a>
+<a name="mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback-when-user-is-not-the-creator"></a>
 #### when user is not the creator
-should not remove comment.
+it's not removing the comment.
 
 ```js
 return thingy.removeComment('n0t3x1t1n9', commentIds['level 1'], function(err, updatedThingy) {
@@ -201,9 +200,9 @@ return thingy.removeComment('n0t3x1t1n9', commentIds['level 1'], function(err, u
 });
 ```
 
-<a name="thingy-playing-rattle-when-removing-a-comment-when-user-is-the-creator"></a>
+<a name="mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback-when-user-is-the-creator"></a>
 #### when user is the creator
-should remove comment of level1.
+can remove comment at depth 1.
 
 ```js
 return thingy.removeComment(commentorUserId, commentIds['level 1'], function(err, updatedThingy) {
@@ -213,7 +212,7 @@ return thingy.removeComment(commentorUserId, commentIds['level 1'], function(err
 });
 ```
 
-should remove comment of level2.
+can remove comment at depth 2.
 
 ```js
 return thingy.removeComment(commentorUserId, commentIds['level 2'], function(err, updatedThingy) {
@@ -223,7 +222,7 @@ return thingy.removeComment(commentorUserId, commentIds['level 2'], function(err
 });
 ```
 
-should remove comment of level3.
+can remove comment at depth 3.
 
 ```js
 return thingy.removeComment(commentorUserId, commentIds['level 3'], function(err, updatedThingy) {
@@ -233,9 +232,9 @@ return thingy.removeComment(commentorUserId, commentIds['level 3'], function(err
 });
 ```
 
-<a name="thingy-playing-rattle-when-adding-a-user-like"></a>
-### When adding a user like
-should add one user like if user doesn't already liked.
+<a name="mongooserattleplugin-plugin-methods-documentaddlikeuserid-callback"></a>
+### document.addLike(userId, callback)
+add one user like if user doesn't already liked.
 
 ```js
 return thingy.addLike(commentorUserId, function(err, updatedThingy) {
@@ -244,7 +243,7 @@ return thingy.addLike(commentorUserId, function(err, updatedThingy) {
 });
 ```
 
-shouldn't add an other user like if user already liked.
+not add an other user like if user already liked.
 
 ```js
 return thingy.addLike(commentorUserId, function(err, updatedThingy) {
@@ -255,9 +254,9 @@ return thingy.addLike(commentorUserId, function(err, updatedThingy) {
 });
 ```
 
-<a name="thingy-playing-rattle-when-removing-a-user-like"></a>
-### When removing a user like
-should not affect current likes list if user didn'nt already liked.
+<a name="mongooserattleplugin-plugin-methods-documentremovelikeuserid-callback"></a>
+### document.removeLike(userId, callback)
+not affect current likes list if user didn'nt already liked.
 
 ```js
 return thingy.removeLike(userTwoId, function(err, updatedThingy) {
@@ -266,7 +265,7 @@ return thingy.removeLike(userTwoId, function(err, updatedThingy) {
 });
 ```
 
-should remove user like from likes list if user already liked.
+remove user like from likes list if user already liked.
 
 ```js
 return thingy.removeLike(commentorUserId, function(err, updatedThingy) {
@@ -275,9 +274,9 @@ return thingy.removeLike(commentorUserId, function(err, updatedThingy) {
 });
 ```
 
-<a name="thingy-playing-rattle-when-adding-a-reply-to-a-comment"></a>
-### When adding a reply to a comment
-should fails if comment doesn't exist.
+<a name="mongooserattleplugin-plugin-methods-documentaddreplytocommentuserid-commentid-message-callback"></a>
+### document.addReplyToComment(userId, commentId, message, callback)
+fails if comment doesn't exist.
 
 ```js
 return thingy.addReplyToComment(commentorUserId, 'n0t3x1t1n9', 'dummy message', function(err, updatedThingy) {
@@ -286,7 +285,7 @@ return thingy.addReplyToComment(commentorUserId, 'n0t3x1t1n9', 'dummy message', 
 });
 ```
 
-should fails if message length is out of min and max.
+fails if message length is out of min and max.
 
 ```js
 return thingy.addReplyToComment(commentorUserId, commentId, '', function(err, updatedThingy) {
@@ -295,7 +294,7 @@ return thingy.addReplyToComment(commentorUserId, commentId, '', function(err, up
 });
 ```
 
-should append a new comment to the parent comment if parent comment exists.
+append a new comment to the parent comment if parent comment exists.
 
 ```js
 return thingy.addReplyToComment(commentorUserId, commentId, 'dummy message', function(err, updatedThingy) {
@@ -304,9 +303,9 @@ return thingy.addReplyToComment(commentorUserId, commentId, 'dummy message', fun
 });
 ```
 
-<a name="thingy-playing-rattle-when-adding-a-user-like-to-a-comment"></a>
-### When adding a user like to a comment
-should fails if comment doesn't exist.
+<a name="mongooserattleplugin-plugin-methods-documentaddliketocommentuserid-commentid-callback"></a>
+### document.addLikeToComment(userId, commentId, callback)
+fails if comment doesn't exist.
 
 ```js
 return thingy.addLikeToComment(commentorUserId, 'n0t3x1t1n9', function(err, updatedThingy) {
@@ -315,7 +314,7 @@ return thingy.addLikeToComment(commentorUserId, 'n0t3x1t1n9', function(err, upda
 });
 ```
 
-should add one user like if user doesn't already liked and comment exists.
+add one user like if user doesn't already liked and comment exists.
 
 ```js
 return thingy.addLikeToComment(commentorUserId, commentId, function(err, updatedThingy) {
@@ -324,7 +323,7 @@ return thingy.addLikeToComment(commentorUserId, commentId, function(err, updated
 });
 ```
 
-shouldn't add an other user like if user already liked and comment exists.
+not add an other user like if user already liked and comment exists.
 
 ```js
 return thingy.addLikeToComment(commentorUserId, commentId, function(err, updatedThingy) {
@@ -335,9 +334,9 @@ return thingy.addLikeToComment(commentorUserId, commentId, function(err, updated
 });
 ```
 
-<a name="thingy-playing-rattle-when-removing-a-user-like-from-a-comment"></a>
-### When removing a user like from a comment
-should fails if comment doesn't exist.
+<a name="mongooserattleplugin-plugin-methods-documentremovelikefromcommentuserid-commentid-callback"></a>
+### document.removeLikeFromComment(userId, commentId, callback)
+fails if comment doesn't exist.
 
 ```js
 return thingy.removeLikeFromComment(commentorUserId, 'n0t3x1t1n9', function(err, updatedThingy) {
@@ -346,7 +345,7 @@ return thingy.removeLikeFromComment(commentorUserId, 'n0t3x1t1n9', function(err,
 });
 ```
 
-should not affect current likes list if user didn'nt already liked.
+not affect current likes list if user didn'nt already liked.
 
 ```js
 return thingy.removeLikeFromComment(new ObjectId(), commentId, function(err, updatedThingy) {
@@ -355,33 +354,11 @@ return thingy.removeLikeFromComment(new ObjectId(), commentId, function(err, upd
 });
 ```
 
-should remove user like from likes list if user already liked.
+remove user like from likes list if user already liked.
 
 ```js
 return thingy.removeLikeFromComment(commentorUserId, commentId, function(err, updatedThingy) {
   assert.equal(1, updatedThingy.getComment(commentId).likes.length);
-  return done();
-});
-```
-
-<a name="activity"></a>
-# Activity
-should save all activities.
-
-```js
-return Activity.find(function(err, activities) {
-  should.not.exists(err);
-  assert.equal(8, activities.length);
-  return done();
-});
-```
-
-get activities on objectCreation of type thingy.
-
-```js
-return Activity.findByObjectNameAndAction('Thingy', Activity.actions.objectCreation, function(err, activities) {
-  should.not.exists(err);
-  assert.equal(1, activities.length);
   return done();
 });
 ```
