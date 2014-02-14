@@ -2,7 +2,13 @@
 
 ## Description
 
-Add social interactions to document
+Add social interactions (messages and likes) to mongoose document.
+
+You can :
+ - like/unlike the document
+ - add/remove comments to the document
+ - add/remove replies to a comment
+ - like/unlike a comment or a reply
 
 ## Installation
 
