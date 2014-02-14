@@ -1,5 +1,9 @@
 # mongoose-rattle-plugin [![Build Status](https://secure.travis-ci.org/daemon1981/mongoose-rattle-plugin.png)](https://travis-ci.org/daemon1981/mongoose-rattle-plugin)
 
+## Prerequisite
+
+Your project must be with mongoose 3.8.x. Otherwise you'll have conflicts and it will not work.
+
 ## Description
 
 Add social interactions (messages and likes) to mongoose document.
