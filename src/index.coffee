@@ -184,7 +184,7 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.methods.getComment = (commentId) ->
     searchComment = (comments, commentId) ->
       for comment in comments
-        if comment._id is commentId
+        if String(comment._id) is String(commentId)
           return comment
         comment = searchComment(comment.comments, commentId)
         return comment if comment isnt null

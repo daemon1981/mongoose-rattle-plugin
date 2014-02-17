@@ -89,6 +89,8 @@ describe "MongooseRattlePlugin", ->
         assert.equal(level2UserTwoMsg, thingy.getComment(commentIds['level 2 ' + userTwoId]).message)
       it "can retrieve a third level comment", ->
         assert.equal(level3UserTwoMsg, thingy.getComment(commentIds['level 3 ' + userOneId]).message)
+      it "can retrieve a comment when commentId is a string and not an ObjectId", ->
+        assert.equal(level1UserOneMsg, thingy.getComment(String(commentIds['level 1 ' + userOneId])).message)
 
     describe "document.addComment(userId, message, callback)", ->
       it "append a new comment and return comment id", (done) ->
