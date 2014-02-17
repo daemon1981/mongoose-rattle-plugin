@@ -26,7 +26,6 @@ module.exports = rattlePlugin = (schema, options) ->
 
   schema.add
     creator:       type: ObjectId, ref: options.UserShemaName, required: true
-    owner:         type: ObjectId, ref: options.UserShemaName, required: true
     dateCreation:  type: Date
     dateUpdate:    type: Date
     likes:         [type: ObjectId, ref: options.UserShemaName]
@@ -35,7 +34,7 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.pre "save", (next) ->
     if this.isNew
       # emit objectCreation event with information on object, targetId, actor
-      this.emit('objectCreation', this, this._id, this.owner)
+      this.emit('objectCreation', this, this._id, this.creator)
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
