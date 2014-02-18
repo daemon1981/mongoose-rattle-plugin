@@ -319,3 +319,7 @@ describe "MongooseRattlePlugin", ->
         thingy.removeLikeFromComment commentorUserId, commentId, (err, updatedThingy) ->
           assert.equal 1, updatedThingy.getComment(commentId).likes.length
           done()
+      it "remove user like from likes list if user already liked when userId param is a string", (done) ->
+        thingy.removeLikeFromComment String(commentorUserId), commentId, (err, updatedThingy) ->
+          assert.equal 1, updatedThingy.getComment(commentId).likes.length
+          done()

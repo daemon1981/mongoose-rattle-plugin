@@ -171,7 +171,7 @@ module.exports = rattlePlugin = (schema, options) ->
     return callback(new Error('Comment doesn\'t exist')) if !comment
 
     comment.likes = comment.likes.filter (likeUserId) ->
-      return likeUserId isnt userId
+      return String(likeUserId) isnt String(userId)
 
     self = this
 
