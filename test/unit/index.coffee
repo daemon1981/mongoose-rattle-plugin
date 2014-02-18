@@ -298,6 +298,11 @@ describe "MongooseRattlePlugin", ->
           thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
             assert.equal 1, updatedThingy.getComment(commentId).likes.length
             done()
+      it "not add an other user like if user already liked and comment exists when userId param is a string", (done) ->
+        thingy.addLikeToComment String(commentorUserId), commentId, (err, updatedThingy) ->
+          thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
+            assert.equal 1, updatedThingy.getComment(commentId).likes.length
+            done()
 
     describe "document.removeLikeFromComment(userId, commentId, callback)", ->
       level1Msg = 'level1 message'

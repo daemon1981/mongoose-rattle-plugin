@@ -142,7 +142,7 @@ module.exports = rattlePlugin = (schema, options) ->
     return callback(new Error('Comment doesn\'t exist')) if !comment
 
     hasAlreadyLiked = comment.likes.some (likeUserId) ->
-      return likeUserId is userId
+      return String(likeUserId) is String(userId)
 
     comment.likes.push userId  if !hasAlreadyLiked
 
