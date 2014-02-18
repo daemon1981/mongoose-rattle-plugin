@@ -132,7 +132,7 @@ describe "MongooseRattlePlugin", ->
             should.exists(err)
             done()
       describe 'when user is the creator', ->
-        it "edit comment and return comment id if user is the owner", (done) ->
+        checkEditCommentWhenOwner = (commentorUserId, commentId, updatedMessage, done) ->
           thingy.editComment commentorUserId, commentId, updatedMessage, (err) ->
             should.not.exists(err)
             should.exists(commentId)
@@ -141,6 +141,10 @@ describe "MongooseRattlePlugin", ->
               assert.equal(1, updatedThingy.comments.length)
               assert.equal(updatedMessage, updatedThingy.comments[0].message)
               done()
+        it "edit comment and return comment id if user is the owner", (done) ->
+          checkEditCommentWhenOwner(commentorUserId, commentId, updatedMessage, done)
+        it "edit comment and return comment id if user is the owner when userId is a string", (done) ->
+          checkEditCommentWhenOwner(String(commentorUserId), commentId, updatedMessage, done)
         it "update dateCreation and dateUpdated", (done) ->
           clock = sinon.useFakeTimers(new Date(2012, 0, 1, 1, 1, 36).getTime())
           thingy.editComment commentorUserId, commentId, updatedMessage, (err, updatedThingy) ->
