@@ -107,7 +107,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     parseComments = (comments) ->
       comments = comments.filter (comment) ->
-        toKeep = comment.creator isnt userId || comment._id isnt commentId
+        toKeep = String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
         comment.comments = parseComments(comment.comments, comment._id) if toKeep is true
         return toKeep
 

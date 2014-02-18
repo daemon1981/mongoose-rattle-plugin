@@ -202,6 +202,16 @@ describe "MongooseRattlePlugin", ->
             should.exists(updatedThingy)
             should.not.exists(updatedThingy.getComment(commentIds['level 3']))
             done()
+        it "remove comment when userId param is a string", (done) ->
+          thingy.removeComment String(commentorUserId), commentIds['level 1'], (err, updatedThingy) ->
+            should.exists(updatedThingy)
+            should.not.exists(updatedThingy.getComment(commentIds['level 1']))
+            done()
+        it "remove comment when commentId is a string", (done) ->
+          thingy.removeComment commentorUserId, String(commentIds['level 1']), (err, updatedThingy) ->
+            should.exists(updatedThingy)
+            should.not.exists(updatedThingy.getComment(commentIds['level 1']))
+            done()
 
     describe "document.addLike(userId, callback)", ->
       it "add one user like if user doesn't already liked", (done) ->
