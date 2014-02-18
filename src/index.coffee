@@ -125,7 +125,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
   schema.methods.addLike = (userId, callback) ->
     hasAlreadyLiked = this.likes.some (likeUserId) ->
-      return likeUserId is userId
+      return String(likeUserId) is String(userId)
 
     this.likes.push userId if !hasAlreadyLiked
 

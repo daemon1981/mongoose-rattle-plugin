@@ -215,6 +215,12 @@ describe "MongooseRattlePlugin", ->
             assert.equal(1, thingy.likes.length)
             done()
 
+      it "not add an other user like if user already liked when userId param is a string", (done) ->
+        thingy.addLike commentorUserId, (err, updatedThingy) ->
+          thingy.addLike String(commentorUserId), (err, updatedThingy) ->
+            assert.equal(1, thingy.likes.length)
+            done()
+
     describe "document.removeLike(userId, callback)", ->
       userOneId = new ObjectId()
       userTwoId = new ObjectId()
