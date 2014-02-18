@@ -156,7 +156,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
   schema.methods.removeLike = (userId, callback) ->
     this.likes = this.likes.filter (likeUserId) ->
-      return likeUserId isnt userId
+      return String(likeUserId) isnt String(userId)
 
     self = this
 

@@ -240,6 +240,11 @@ describe "MongooseRattlePlugin", ->
           assert.equal(1, updatedThingy.likes.length)
           done()
 
+      it "remove user like from likes list if user already liked when userId param is a string", (done) ->
+        thingy.removeLike String(commentorUserId), (err, updatedThingy) ->
+          assert.equal(1, updatedThingy.likes.length)
+          done()
+
     describe "document.addReplyToComment(userId, commentId, message, callback)", ->
       userOneId = new ObjectId()
       userTwoId = new ObjectId()
