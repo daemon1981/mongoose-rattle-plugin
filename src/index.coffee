@@ -102,18 +102,17 @@ module.exports = rattlePlugin = (schema, options) ->
     return this.comments[this.comments.length - 1]._id
 
   schema.methods.removeComment = (userId, commentId, callback) ->
-    comment = this.getComment(commentId)
-    return callback(new Error('Comment doesn\'t exist')) if !comment
+    return callback(new Error('Comment doesn\'t exist')) if !this.getComment(commentId)
 
-    parseComments = (comments) ->
+    findAndRemoveComment = (comments) ->
       comments = comments.filter (comment) ->
         toKeep = String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
-        comment.comments = parseComments(comment.comments, comment._id) if toKeep is true
+        comment.comments = findAndRemoveComment(comment.comments) if toKeep is true
         return toKeep
 
       return comments
 
-    this.comments = parseComments(this.comments)
+    this.comments = findAndRemoveComment(this.comments)
 
     self = this
 
