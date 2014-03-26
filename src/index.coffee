@@ -34,16 +34,97 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.pre "save", (next) ->
     if this.isNew
       # emit objectCreation event with information on object, targetId, actor
-      this.emit('objectCreation', this, this._id, this.creator)
+      this.emit('objectCreation', this, this, this.creator)
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
     next()
 
-  schema.methods.emit = (event, object, target, extra) ->
-    if options.emitter
-      options.emitter.emit(event, object, target, extra)
+  ####################################################################
+  # statics
+  ####################################################################
 
+  ###*
+   * Get the list of rattles with limited amount of comments
+   *
+   * @param {Number} num - number of rattles
+   * @param {Number} maxLastComments - number max of comments retrieved
+   * @param {Date}   fromCreationDate - creation date from which we retrieve rattles
+   * @callback(err, rattles)
+  ###
+  schema.statics.getList = (num, maxLastComments, fromCreationDate, callback) ->
+    if 'function' is typeof fromCreationDate
+      callback = fromCreationDate
+      fromCreationDate = null
+
+    query = {}
+    if fromCreationDate isnt null
+      query =
+        dateCreation: { $lt: fromCreationDate }
+
+    fields =
+      text:         1
+      creator:      1
+      dateCreation: 1
+      dateUpdate:   1
+      likes:        1
+      comments:     { $slice: [-maxLastComments, maxLastComments] }
+
+    this.find(query, fields)
+      .sort('-dateCreation')
+      .limit(num)
+      .exec(callback)
+
+  ###*
+   * Get the list of comments from a rattle id
+   *
+   * @param {Number} rattleId - id of the rattle
+   * @param {Number} num - number of comments required
+   * @param {Number} offsetFromEnd - offset from end of the list of comments
+   * @callback(err, comments)
+  ###
+  schema.statics.getListOfCommentsById = (rattleId, num, offsetFromEnd, callback) ->
+    self = this
+
+    this.aggregate {$unwind: "$comments"}, {$group: {_id: '', count: {$sum: 1}}}, (err, summary) ->
+      start = -num - offsetFromEnd
+      limit = num
+
+      if summary[0].count < Math.abs(start)
+        diff = Math.abs(start) - summary[0].count
+        start += diff
+        limit -= diff
+
+      fields =
+        comments: { $slice: [start, limit] }
+
+      self.findById(rattleId, fields).exec (err, rattle) ->
+        return callback(err) if err
+        callback(null, rattle.comments)
+
+  ####################################################################
+  # methods
+  ####################################################################
+
+  ###*
+   * Emit an event
+   *
+   * @param {String} eventName - event name
+   * @param {Object} resource  - object from which the event occured
+   * @param {Number} targetId  - object to which the event occured
+   * @param {Number} actor     - actor who triggered the event
+  ###
+  schema.methods.emit = (eventName, targetId, resource, actor) ->
+    if options.emitter
+      options.emitter.emit(eventName, targetId, resource, actor)
+
+  ###*
+   * Add a comment
+   *
+   * @param {Number} userId  - user id adding comment
+   * @param {String} message - text message
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.addComment = (userId, message, callback) ->
     self = this
 
@@ -54,14 +135,22 @@ module.exports = rattlePlugin = (schema, options) ->
       dateUpdate:    moment().toDate()
     this.comments.push(comment)
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit addComment event with information on object, targetId, actor
-      self.emit('addComment', self, comment._id, userId)
-      callback(err, data)
+      self.emit('addComment', comment._id, self, userId)
+      callback(err, updatedRattle)
 
     return this.comments[this.comments.length - 1]._id
 
+  ###*
+   * Add a reply to a comment
+   *
+   * @param {Number} userId    - user id replying to the comment
+   * @param {Number} commentId - comment id on which the user reply
+   * @param {String} message   - text message
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.addReplyToComment = (userId, commentId, message, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
@@ -75,14 +164,22 @@ module.exports = rattlePlugin = (schema, options) ->
       dateUpdate:    moment().toDate()
     comment.comments.push(reply)
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit addReplyToComment event with information on object, targetId, actor
-      self.emit('addReplyToComment', self, reply._id, userId)
-      callback(err, data)
+      self.emit('addReplyToComment', reply._id, comment, userId)
+      callback(err, updatedRattle)
 
     return comment.comments[comment.comments.length - 1]._id
 
+  ###*
+   * Edit a comment
+   *
+   * @param {Number} userId    - user id editing the comment
+   * @param {Number} commentId - comment id on which the user edit
+   * @param {String} message   - text message
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.editComment = (userId, commentId, message, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
@@ -93,14 +190,21 @@ module.exports = rattlePlugin = (schema, options) ->
 
     self = this
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit editComment event with information on object, targetId, actor
-      self.emit('editComment', self, comment._id, userId)
-      callback(err, data)
+      self.emit('editComment', comment._id, self, userId)
+      callback(err, updatedRattle)
 
     return this.comments[this.comments.length - 1]._id
 
+  ###*
+   * Remove a comment
+   *
+   * @param {Number} userId    - user id removing the comment
+   * @param {Number} commentId - comment id removed
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.removeComment = (userId, commentId, callback) ->
     return callback(new Error('Comment doesn\'t exist')) if !this.getComment(commentId)
 
@@ -116,12 +220,18 @@ module.exports = rattlePlugin = (schema, options) ->
 
     self = this
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit removeComment event with information on object, targetId, actor
-      self.emit('removeComment', self, self._id, userId)
-      callback(err, data)
+      self.emit('removeComment', self._id, self, userId)
+      callback(err, updatedRattle)
 
+  ###*
+   * Like a rattle
+   *
+   * @param {Number} userId - user id liking
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.addLike = (userId, callback) ->
     hasAlreadyLiked = this.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
@@ -130,12 +240,19 @@ module.exports = rattlePlugin = (schema, options) ->
 
     self = this
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit addLike event with information on object, targetId, actor
-      self.emit('addLike', self, userId, userId)
-      callback(err, data)
+      self.emit('addLike', userId, self, userId)
+      callback(err, updatedRattle)
 
+  ###*
+   * Like a comment
+   *
+   * @param {Number} userId    - user id liking
+   * @param {Number} commentId - comment id to be liked
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.addLikeToComment = (userId, commentId, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
@@ -147,24 +264,37 @@ module.exports = rattlePlugin = (schema, options) ->
 
     self = this
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit addLikeToComment event with information on object, targetId, actor
-      self.emit('addLikeToComment', self, commentId, userId)
-      callback(err, data)
+      self.emit('addLikeToComment', commentId, self, userId)
+      callback(err, updatedRattle)
 
+  ###*
+   * Unlike a rattle
+   *
+   * @param {Number} userId - user id unliking
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.removeLike = (userId, callback) ->
     this.likes = this.likes.filter (likeUserId) ->
       return String(likeUserId) isnt String(userId)
 
     self = this
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit removeLike event with information on object, targetId, actor
-      self.emit('removeLike', self, userId, userId)
-      callback(err, data)
+      self.emit('removeLike', userId, self, userId)
+      callback(err, updatedRattle)
 
+  ###*
+   * Unlike a comment
+   *
+   * @param {Number} userId    - user id unliking
+   * @param {Number} commentId - comment id to be unliked
+   * @callback(err, updatedRattle)
+  ###
   schema.methods.removeLikeFromComment = (userId, commentId, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
@@ -174,12 +304,18 @@ module.exports = rattlePlugin = (schema, options) ->
 
     self = this
 
-    this.save (err, data) ->
+    this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
       # emit removeLike event with information on object, targetId, actor
-      self.emit('removeLikeFromComment', self, userId, commentId)
-      callback(err, data)
+      self.emit('removeLikeFromComment', commentId, self, userId)
+      callback(err, updatedRattle)
 
+  ###*
+   * Get comment whatever be its depth
+   *
+   * @param {Number} commentId - comment id to be retrieved
+   * @return {Object} comment found
+  ###
   schema.methods.getComment = (commentId) ->
     searchComment = (comments, commentId) ->
       for comment in comments

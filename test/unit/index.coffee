@@ -353,3 +353,17 @@ describe "MongooseRattlePlugin", ->
         thingy.removeLikeFromComment String(commentorUserId), commentId, (err, updatedThingy) ->
           assert.equal 1, updatedThingy.getComment(commentId).likes.length
           done()
+
+    describe "document.getList", ->
+      describe "(num, maxNumLastPostComments, callback)", ->
+        it "get list of the number of 'num' rattles"
+        it "each rattle has a number of 'maxLastComments' comments max"
+      describe "(num, maxNumLastPostComments, fromDate, callback)", ->
+        it "get list of rattles created from the 'fromDate'"
+        it "each rattle has a number of 'maxLastComments' comments max"
+
+    describe "document.getListOfCommentsById(rattleId, num, offsetFromEnd, callback)", ->
+      it "get last num of comments for a rattle id when offset is set to 0"
+      it "get last num of comments from the offsetFromEnd"
+      it "get no comments when offsetFromEnd is equal to the number of comments"
+      it "limit comments when offsetFromEnd + num is greater that the number of comments"
