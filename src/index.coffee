@@ -68,7 +68,9 @@ module.exports = rattlePlugin = (schema, options) ->
       dateCreation: 1
       dateUpdate:   1
       likes:        1
-      comments:     { $slice: [-maxLastComments, maxLastComments] }
+
+    if maxLastComments > 0
+      fields.comments = { $slice: [-maxLastComments, maxLastComments] }
 
     this.find(query, fields)
       .sort('-dateCreation')
@@ -94,6 +96,8 @@ module.exports = rattlePlugin = (schema, options) ->
         diff = Math.abs(start) - summary[0].count
         start += diff
         limit -= diff
+
+      return callback(null, []) if limit <= 0
 
       fields =
         comments: { $slice: [start, limit] }
