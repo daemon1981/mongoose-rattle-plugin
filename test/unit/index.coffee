@@ -30,6 +30,7 @@ describe "MongooseRattlePlugin", ->
     it "only update dateUpdate when updating", (done) ->
       clock = sinon.useFakeTimers(new Date(2011, 0, 1, 1, 1, 36).getTime())
       new Thingy(creator: objectCreatorUserId, owner: objectCreatorUserId).save (err, thingySaved) ->
+        clock.restore()
         clock = sinon.useFakeTimers(new Date(2012, 0, 1, 1, 1, 36).getTime())
         thingySaved.save (err, thingySaved) ->
           assert.notDeepEqual(new Date(), thingySaved.dateCreation)
@@ -106,7 +107,7 @@ describe "MongooseRattlePlugin", ->
         commentId = thingy.addComment commentorUserId, 'dummy message', (err, updatedThingy) ->
           assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateCreation)
           assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateUpdate)
-          clock = sinon.restore()
+          clock.restore()
           done()
       it "fails if message length is out of min and max", (done) ->
         thingy.addComment commentorUserId, '', (err) ->
@@ -119,7 +120,7 @@ describe "MongooseRattlePlugin", ->
       beforeEach (done) ->
         clock = sinon.useFakeTimers(new Date(2011, 0, 1, 1, 1, 36).getTime())
         commentId = thingy.addComment commentorUserId, 'dummy message', (err) ->
-          clock = sinon.restore()
+          clock.restore()
           done()
 
       it "fails if message length is out of min and max", (done) ->
@@ -150,7 +151,7 @@ describe "MongooseRattlePlugin", ->
           thingy.editComment commentorUserId, commentId, updatedMessage, (err, updatedThingy) ->
             assert.notDeepEqual(new Date(), updatedThingy.getComment(commentId).dateCreation)
             assert.deepEqual(new Date(), updatedThingy.getComment(commentId).dateUpdate)
-            clock = sinon.restore()
+            clock.restore()
             done()
 
     describe "document.removeComment(userId, commentId, callback)", ->
@@ -352,4 +353,151 @@ describe "MongooseRattlePlugin", ->
       it "remove user like from likes list if user already liked when userId param is a string", (done) ->
         thingy.removeLikeFromComment String(commentorUserId), commentId, (err, updatedThingy) ->
           assert.equal 1, updatedThingy.getComment(commentId).likes.length
+          done()
+
+  describe "Plugin statics", ->
+
+    describe "document.getList", ->
+      creator1Id = new ObjectId()
+      creator2Id = new ObjectId()
+      beforeEach (done) ->
+        rattles = [
+          creator:      creator1Id
+          comments: [
+            message:       '11'
+            creator:       new ObjectId()
+          ,
+            message:       '12'
+            creator:       new ObjectId()
+          ]
+        ,
+          creator:  creator2Id
+          comments: [
+            message:       '21'
+            creator:       new ObjectId()
+          ,
+            message:       '22'
+            creator:       new ObjectId()
+          ]
+        ]
+        async.eachSeries rattles, (save = (rattleData, next) ->
+          new Thingy(rattleData).save next
+        ), done
+
+      describe "(num, maxNumLastPostComments, callback)", ->
+        it "get list of the number of 'num' last rattles", (done) ->
+          Thingy.find {}, (err, rattles) ->
+            Thingy.getList 1, 0, (err, rattles) ->
+              should.not.exists(err)
+              assert.equal rattles.length, 1
+              assert.deepEqual rattles[0].creator, creator2Id
+              done()
+        it "get all rattles if 'num' is greater than the number of rattles", (done) ->
+          Thingy.getList 3, 0, (err, rattles) ->
+            should.not.exists(err)
+            assert.equal rattles.length, 2
+            done()
+        it "each rattle get the maximum of 'maxLastComments' last comments", (done) ->
+          Thingy.getList 1, 1, (err, rattles) ->
+            should.not.exists(err)
+            assert.equal rattles.length, 1
+            assert.deepEqual rattles[0].creator, creator2Id
+            should.exists(rattles[0].comments)
+            assert.equal rattles[0].comments.length, 1
+            assert.equal rattles[0].comments[0].message, '22'
+            done()
+        it "each all comments when 'maxLastComments' is greater than number of comments", (done) ->
+          Thingy.getList 1, 3, (err, rattles) ->
+            should.not.exists(err)
+            assert.equal rattles.length, 1
+            should.exists(rattles[0].comments)
+            assert.equal rattles[0].comments.length, 2
+            done()
+      describe "(num, maxNumLastPostComments, fromDate, callback)", ->
+        it "get list of last rattles created from the 'fromDate'", (done) ->
+          # retrieve last rattle
+          Thingy.getList 1, 0, (err, rattles) ->
+            Thingy.getList 1, 0, rattles[0].dateCreation, (err, rattles) ->
+              should.not.exists(err)
+              assert.equal rattles.length, 1
+              assert.deepEqual rattles[0].creator, creator1Id
+              done()
+        it "get all last rattles if 'num' is greater than the number of last rattles", (done) ->
+          # retrieve last rattle
+          Thingy.getList 1, 0, (err, rattles) ->
+            Thingy.getList 2, 0, rattles[0].dateCreation, (err, rattles) ->
+              should.not.exists(err)
+              assert.equal rattles.length, 1
+              done()
+        it "each rattle get the maximum of 'maxLastComments' last comments", (done) ->
+          # retrieve last rattle
+          Thingy.getList 1, 0, (err, rattles) ->
+            Thingy.getList 1, 1, rattles[0].dateCreation, (err, rattles) ->
+              should.not.exists(err)
+              assert.equal rattles.length, 1
+              assert.deepEqual rattles[0].creator, creator1Id
+              should.exists(rattles[0].comments)
+              assert.equal rattles[0].comments.length, 1
+              assert.equal rattles[0].comments[0].message, '12'
+              done()
+
+    describe "document.getListOfCommentsById(rattleId, num, offsetFromEnd, callback)", ->
+      creatorId = new ObjectId()
+      rattleId = null
+      beforeEach (done) ->
+        async.waterfall [
+          saveThingy = (next) ->
+            new Thingy(
+              creator:      creatorId
+            ).save (err, data) ->
+              next(err) if err
+              rattleId = data._id
+              next(null, data)
+          pushComments = (thingy, next) ->
+            comments = [
+              message:       '11'
+              creator:       new ObjectId()
+            ,
+              message:       '12'
+              creator:       new ObjectId()
+            ,
+              message:       '13'
+              creator:       new ObjectId()
+            ]
+            async.eachSeries comments, (push = (comment, next) ->
+              thingy.addComment comment.creator, comment.message, next
+            ), next
+        ], done
+
+      it "get last 'num' of comments for 'rattleId' when offsetFromEnd is 0", (done) ->
+        Thingy.getListOfCommentsById rattleId, 1, 0, (err, comments) ->
+          should.not.exists(err)
+          assert.equal comments.length, 1
+          assert.equal comments[0].message, '13'
+          done()
+      it "get last num of comments from the offsetFromEnd", (done) ->
+        Thingy.getListOfCommentsById rattleId, 1, 1, (err, comments) ->
+          should.not.exists(err)
+          assert.equal comments.length, 1
+          assert.equal comments[0].message, '12'
+          done()
+      it "get no comments when offsetFromEnd is equal to the number of comments", (done) ->
+        Thingy.getListOfCommentsById rattleId, 1, 3, (err, comments) ->
+          should.not.exists(err)
+          assert.equal comments.length, 0
+          done()
+      it "limit comments when offsetFromEnd + num is greater that the number of comments", (done) ->
+        Thingy.getListOfCommentsById rattleId, 3, 1, (err, comments) ->
+          should.not.exists(err)
+          assert.equal comments[0].message, '11'
+          assert.equal comments[1].message, '12'
+          assert.equal comments.length, 2
+          done()
+      it "keep comments order", (done) ->
+        Thingy.getListOfCommentsById rattleId, 3, 0, (err, comments) ->
+          should.not.exists(err)
+          assert.equal comments[0].message, '11'
+          assert.equal comments[1].message, '12'
+          assert.equal comments[2].message, '13'
+          assert.equal comments.length, 3
           done()
