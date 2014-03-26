@@ -34,7 +34,7 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.pre "save", (next) ->
     if this.isNew
       # emit objectCreation event with information on object, targetId, actor
-      this.emit('objectCreation', this, this, this.creator)
+      this.emit('objectCreation', this._id, this, this.creator)
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
@@ -114,8 +114,8 @@ module.exports = rattlePlugin = (schema, options) ->
    * Emit an event
    *
    * @param {String} eventName - event name
-   * @param {Object} resource  - object from which the event occured
    * @param {Number} targetId  - object to which the event occured
+   * @param {Object} resource  - object from which the event occured
    * @param {Number} actor     - actor who triggered the event
   ###
   schema.methods.emit = (eventName, targetId, resource, actor) ->
