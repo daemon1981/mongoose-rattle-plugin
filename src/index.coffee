@@ -49,18 +49,20 @@ module.exports = rattlePlugin = (schema, options) ->
    *
    * @param {Number} num - number of rattles
    * @param {Number} maxLastComments - number max of comments retrieved
-   * @param {Date}   fromCreationDate - creation date from which we retrieve rattles
+   * @param {Object} options:
+   *                   fromCreationDate: creation date from which we retrieve rattles
+   *                   populate:         list of fields to populate (example: 'fieldName' or 'fieldName1 fieldName2')
    * @callback(err, rattles)
   ###
-  schema.statics.getList = (num, maxLastComments, fromCreationDate, callback) ->
-    if 'function' is typeof fromCreationDate
-      callback = fromCreationDate
-      fromCreationDate = null
+  schema.statics.getList = (num, maxLastComments, options, callback) ->
+    if 'function' is typeof options
+      callback = options;
+      options = {};
 
     query = {}
-    if fromCreationDate isnt null
+    if options.fromCreationDate
       query =
-        dateCreation: { $lt: fromCreationDate }
+        dateCreation: { $lt: options.fromCreationDate }
 
     fields =
       text:         1
@@ -72,10 +74,14 @@ module.exports = rattlePlugin = (schema, options) ->
     if maxLastComments > 0
       fields.comments = { $slice: [-maxLastComments, maxLastComments] }
 
-    this.find(query, fields)
+    query = this.find(query, fields)
       .sort('-dateCreation')
       .limit(num)
-      .exec(callback)
+
+    if options.populate
+      query.populate options.populate
+    
+    query.exec(callback)
 
   ###*
    * Get the list of comments from a rattle id

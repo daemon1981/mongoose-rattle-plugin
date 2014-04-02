@@ -8,6 +8,7 @@ should   = require 'should'
 mongoose = require 'mongoose'
 
 Thingy   = require '../models/thingy'
+User     = require '../models/user'
 
 ObjectId  = mongoose.Types.ObjectId;
 
@@ -413,33 +414,44 @@ describe "MongooseRattlePlugin", ->
             should.exists(rattles[0].comments)
             assert.equal rattles[0].comments.length, 2
             done()
-      describe "(num, maxNumLastPostComments, fromDate, callback)", ->
-        it "get list of last rattles created from the 'fromDate'", (done) ->
-          # retrieve last rattle
-          Thingy.getList 1, 0, (err, rattles) ->
-            Thingy.getList 1, 0, rattles[0].dateCreation, (err, rattles) ->
-              should.not.exists(err)
-              assert.equal rattles.length, 1
-              assert.deepEqual rattles[0].creator, creator1Id
-              done()
-        it "get all last rattles if 'num' is greater than the number of last rattles", (done) ->
-          # retrieve last rattle
-          Thingy.getList 1, 0, (err, rattles) ->
-            Thingy.getList 2, 0, rattles[0].dateCreation, (err, rattles) ->
-              should.not.exists(err)
-              assert.equal rattles.length, 1
-              done()
-        it "each rattle get the maximum of 'maxLastComments' last comments", (done) ->
-          # retrieve last rattle
-          Thingy.getList 1, 0, (err, rattles) ->
-            Thingy.getList 1, 1, rattles[0].dateCreation, (err, rattles) ->
-              should.not.exists(err)
-              assert.equal rattles.length, 1
-              assert.deepEqual rattles[0].creator, creator1Id
-              should.exists(rattles[0].comments)
-              assert.equal rattles[0].comments.length, 1
-              assert.equal rattles[0].comments[0].message, '12'
-              done()
+      describe "(num, maxNumLastPostComments, options, callback)", ->
+        describe "from a creation date", ->
+          it "get list of last rattles created from the 'fromDate'", (done) ->
+            # retrieve last rattle
+            Thingy.getList 1, 0, (err, rattles) ->
+              Thingy.getList 1, 0, fromCreationDate: rattles[0].dateCreation, (err, rattles) ->
+                should.not.exists(err)
+                assert.equal rattles.length, 1
+                assert.deepEqual rattles[0].creator, creator1Id
+                done()
+          it "get all last rattles if 'num' is greater than the number of last rattles", (done) ->
+            # retrieve last rattle
+            Thingy.getList 1, 0, (err, rattles) ->
+              Thingy.getList 2, 0, fromCreationDate: rattles[0].dateCreation, (err, rattles) ->
+                should.not.exists(err)
+                assert.equal rattles.length, 1
+                done()
+          it "each rattle get the maximum of 'maxLastComments' last comments", (done) ->
+            # retrieve last rattle
+            Thingy.getList 1, 0, (err, rattles) ->
+              Thingy.getList 1, 1, fromCreationDate: rattles[0].dateCreation, (err, rattles) ->
+                should.not.exists(err)
+                assert.equal rattles.length, 1
+                assert.deepEqual rattles[0].creator, creator1Id
+                should.exists(rattles[0].comments)
+                assert.equal rattles[0].comments.length, 1
+                assert.equal rattles[0].comments[0].message, '12'
+                done()
+        describe "populating", ->
+          it "build", (done) ->
+            new User({_id: creator2Id, name: 'Dummy Name'}).save (err) ->
+              # retrieve last rattle
+              Thingy.getList 1, 0, {populate: 'creator'}, (err, rattles) ->
+                  should.not.exists(err)
+                  assert.equal rattles.length, 1
+                  should.exists(rattles[0].creator.name)
+                  assert.equal rattles[0].creator.name, 'Dummy Name'
+                  done()
 
     describe "document.getListOfCommentsById(rattleId, num, offsetFromEnd, callback)", ->
       creatorId = new ObjectId()
