@@ -16,7 +16,7 @@ You can :
 
 ## Installation
 
-```
+```bash
 $ npm install mongoose-rattle-plugin
 ```
 
@@ -24,7 +24,7 @@ $ npm install mongoose-rattle-plugin
 
 ### Add the plugin to a schema
 
-```
+```javascript
 var mongoose           = require('mongoose');
 var MongooseRattlePlugin = require('mongoose-rattle-plugin');
 
