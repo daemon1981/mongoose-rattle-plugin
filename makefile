@@ -16,4 +16,11 @@ test-report:
 		--reporter markdown \
 		test/unit > ./test-unit.md
 
+test-perf:
+	@NODE_ENV=test ./node_modules/.bin/mocha $(T) \
+		--compilers coffee:coffee-script \
+		--recursive \
+		--reporter $(REPORTER) \
+		test/perf
+
 .PHONY: test test-report
