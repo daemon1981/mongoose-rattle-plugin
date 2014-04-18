@@ -50,9 +50,6 @@ describe "MongooseRattlePlugin", ->
       userTwoId = new ObjectId()
       level1UserOneMsg = 'level1 message ' + userOneId
       level1UserTwoMsg = 'level1 message ' + userTwoId
-      level2UserOneMsg = 'level2 message ' + userOneId
-      level2UserTwoMsg = 'level2 message ' + userTwoId
-      level3UserTwoMsg = 'level3 message ' + userOneId
       commentIds = {}
 
       beforeEach (done) ->
@@ -62,36 +59,17 @@ describe "MongooseRattlePlugin", ->
         ,
           message:       level1UserTwoMsg
           creator:       userTwoId
-          comments: [
-            message:       level2UserOneMsg
-            creator:       userOneId
-          ,
-            message:       level2UserTwoMsg
-            creator:       userTwoId
-            comments: [
-              message:       level3UserTwoMsg
-              creator:       userOneId
-            ]
-          ]
         ]
         commentIds['level 1 ' + userOneId] = thingy.comments[0]._id
         commentIds['level 1 ' + userTwoId] = thingy.comments[1]._id
-        commentIds['level 2 ' + userOneId] = thingy.comments[1].comments[0]._id
-        commentIds['level 2 ' + userTwoId] = thingy.comments[1].comments[1]._id
-        commentIds['level 3 ' + userOneId] = thingy.comments[1].comments[1].comments[0]._id
         thingy.save done
 
       it "retrieve null if comment doesn't exist", ->
         assert.equal(null, thingy.getComment('n0t3x1t1n9'))
-      it "can retrieve a simple level comment", ->
+      it "retrieve comment", ->
         assert.equal(level1UserOneMsg, thingy.getComment(commentIds['level 1 ' + userOneId]).message)
         assert.equal(level1UserTwoMsg, thingy.getComment(commentIds['level 1 ' + userTwoId]).message)
-      it "can retrieve a second level comment", ->
-        assert.equal(level2UserOneMsg, thingy.getComment(commentIds['level 2 ' + userOneId]).message)
-        assert.equal(level2UserTwoMsg, thingy.getComment(commentIds['level 2 ' + userTwoId]).message)
-      it "can retrieve a third level comment", ->
-        assert.equal(level3UserTwoMsg, thingy.getComment(commentIds['level 3 ' + userOneId]).message)
-      it "can retrieve a comment when commentId is a string and not an ObjectId", ->
+      it "retrieve a comment when commentId is a string and not an ObjectId", ->
         assert.equal(level1UserOneMsg, thingy.getComment(String(commentIds['level 1 ' + userOneId])).message)
 
     describe "document.addComment(userId, message, callback)", ->
@@ -157,29 +135,17 @@ describe "MongooseRattlePlugin", ->
 
     describe "document.removeComment(userId, commentId, callback)", ->
       level1Msg = 'level1 message'
-      level2Msg = 'level2 message'
-      level3Msg = 'level3 message'
       commentIds = {}
 
       beforeEach (done) ->
         thingy.comments = [
           message:       level1Msg
           creator:       commentorUserId
-          comments: [
-            message:       level2Msg
-            creator:       commentorUserId
-            comments: [
-              message:       level3Msg
-              creator:       commentorUserId
-            ]
-          ],
         ,
           message:       'level1 second message'
           creator:       commentorUserId
         ]
         commentIds['level 1'] = thingy.comments[0]._id
-        commentIds['level 2'] = thingy.comments[0].comments[0]._id
-        commentIds['level 3'] = thingy.comments[0].comments[0].comments[0]._id
         thingy.save done
 
       it "fails if comment doesn't exist", (done) ->
@@ -193,20 +159,10 @@ describe "MongooseRattlePlugin", ->
             should.exists(updatedThingy.getComment(commentIds['level 1']))
             done()
       describe 'when user is the creator', ->
-        it "can remove comment at depth 1", (done) ->
+        it "can remove comment", (done) ->
           thingy.removeComment commentorUserId, commentIds['level 1'], (err, updatedThingy) ->
             should.exists(updatedThingy)
             should.not.exists(updatedThingy.getComment(commentIds['level 1']))
-            done()
-        it "can remove comment at depth 2", (done) ->
-          thingy.removeComment commentorUserId, commentIds['level 2'], (err, updatedThingy) ->
-            should.exists(updatedThingy)
-            should.not.exists(updatedThingy.getComment(commentIds['level 2']))
-            done()
-        it "can remove comment at depth 3", (done) ->
-          thingy.removeComment commentorUserId, commentIds['level 3'], (err, updatedThingy) ->
-            should.exists(updatedThingy)
-            should.not.exists(updatedThingy.getComment(commentIds['level 3']))
             done()
         it "remove comment when userId param is a string", (done) ->
           thingy.removeComment String(commentorUserId), commentIds['level 1'], (err, updatedThingy) ->
@@ -265,34 +221,6 @@ describe "MongooseRattlePlugin", ->
       it "remove user like from likes list if user already liked when userId param is a string", (done) ->
         thingy.removeLike String(commentorUserId), (err, updatedThingy) ->
           assert.equal(1, updatedThingy.likes.length)
-          done()
-
-    describe "document.addReplyToComment(userId, commentId, message, callback)", ->
-      userOneId = new ObjectId()
-      userTwoId = new ObjectId()
-      level1UserOneMsg = 'level1 message ' + userOneId
-      level1UserOneMsgRef = 'level 1 ' + userOneId
-      commentId = ''
-
-      beforeEach (done) ->
-        thingy.comments = [
-          message:       level1UserOneMsg
-          creator:       userOneId
-        ]
-        commentId = thingy.comments[0]._id;
-        thingy.save done
-
-      it "fails if comment doesn't exist", (done) ->
-        thingy.addReplyToComment commentorUserId, 'n0t3x1t1n9', 'dummy message', (err, updatedThingy) ->
-          should.exists(err)
-          done()
-      it "fails if message length is out of min and max", (done) ->
-        thingy.addReplyToComment commentorUserId, commentId, '', (err, updatedThingy) ->
-          should.exists(err)
-          done()
-      it "append a new comment to the parent comment if parent comment exists", (done) ->
-        thingy.addReplyToComment commentorUserId, commentId, 'dummy message', (err, updatedThingy) ->
-          assert.equal 1, updatedThingy.getComment(commentId).comments.length
           done()
 
     describe "document.addLikeToComment(userId, commentId, callback)", ->

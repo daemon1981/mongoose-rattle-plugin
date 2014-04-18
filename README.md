@@ -44,3 +44,20 @@ module.exports = MyModel;
 ### Specifications
 
 Please see the [specifications here](https://github.com/daemon1981/mongoose-rattle-plugin/blob/master/test-unit.md)
+
+## Schema architecture choice
+
+### [Embedding All Comments](http://docs.mongodb.org/ecosystem/use-cases/storing-comments/)
+
+### No recursive embedded (threaded) comments
+
+Recursive comments is not so interesting and brings development much more difficult when requiring performance.
+
+Here is why:
+I think threaded discussions are difficult to follow and doesn't reflect real discussion (or civilized discussion).
+In real life when a group of people discuss about a subject in civilized society, they stay together in circle and keep talking one after another.
+While threaded comments should results to a group a people having a discussion confused in different circles of discussion where every could participate. That could be interesting but I thing that it would result to a mess.
+
+But if you want to develop recursive comments here are interesting links:
+[http://stackoverflow.com/questions/7992185/mongoose-recursive-embedded-document-in-coffeescript](http://stackoverflow.com/questions/7992185/mongoose-recursive-embedded-document-in-coffeescript)
+[http://stackoverflow.com/questions/17416924/create-embedded-docs-with-mongoose-and-express](http://stackoverflow.com/questions/17416924/create-embedded-docs-with-mongoose-and-express)
