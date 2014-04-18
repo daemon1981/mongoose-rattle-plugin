@@ -11,25 +11,22 @@ module.exports = rattlePlugin = (schema, options) ->
   # Schema strategies for embedded comments
   #
   # http://docs.mongodb.org/ecosystem/use-cases/storing-comments/
-  # http://stackoverflow.com/questions/7992185/mongoose-recursive-embedded-document-in-coffeescript
-  # http://stackoverflow.com/questions/17416924/create-embedded-docs-with-mongoose-and-express
 
-  CommentSchema = new Schema()
-
-  CommentSchema.add
+  CommentSchema = new Schema
     message:       type: String, required: true, max: 2000, min: 1
     creator:       type: ObjectId, ref: options.UserShemaName, required: true
     likes:         [type: ObjectId, ref: options.UserShemaName]
-    comments:      [CommentSchema]
+    likesCount:    type: Number, default: 0
     dateCreation:  type: Date
     dateUpdate:    type: Date
 
   schema.add
     creator:       type: ObjectId, ref: options.UserShemaName, required: true
+    likes:         [type: ObjectId, ref: options.UserShemaName]
+    likesCount:    type: Number, default: 0
+    comments:      [CommentSchema]
     dateCreation:  type: Date
     dateUpdate:    type: Date
-    likes:         [type: ObjectId, ref: options.UserShemaName]
-    comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
     if this.isNew
@@ -38,6 +35,7 @@ module.exports = rattlePlugin = (schema, options) ->
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
+    this.likesCount = this.likes.length
     next()
 
   ####################################################################
@@ -69,7 +67,7 @@ module.exports = rattlePlugin = (schema, options) ->
       creator:      1
       dateCreation: 1
       dateUpdate:   1
-      likes:        1
+      likesCount:   1
 
     if maxLastComments > 0
       fields.comments = { $slice: [-maxLastComments, maxLastComments] }
@@ -218,15 +216,9 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.methods.removeComment = (userId, commentId, callback) ->
     return callback(new Error('Comment doesn\'t exist')) if !this.getComment(commentId)
 
-    findAndRemoveComment = (comments) ->
-      comments = comments.filter (comment) ->
-        toKeep = String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
-        comment.comments = findAndRemoveComment(comment.comments) if toKeep is true
-        return toKeep
 
-      return comments
-
-    this.comments = findAndRemoveComment(this.comments)
+    this.comments = this.comments.filter (comment) ->
+      return String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
 
     self = this
 
@@ -246,7 +238,8 @@ module.exports = rattlePlugin = (schema, options) ->
     hasAlreadyLiked = this.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
 
-    this.likes.push userId if !hasAlreadyLiked
+    if !hasAlreadyLiked
+      this.likes.push userId
 
     self = this
 
@@ -321,18 +314,13 @@ module.exports = rattlePlugin = (schema, options) ->
       callback(err, updatedRattle)
 
   ###*
-   * Get comment whatever be its depth
+   * Get comment by id
    *
    * @param {Number} commentId - comment id to be retrieved
    * @return {Object} comment found
   ###
   schema.methods.getComment = (commentId) ->
-    searchComment = (comments, commentId) ->
-      for comment in comments
-        if String(comment._id) is String(commentId)
-          return comment
-        comment = searchComment(comment.comments, commentId)
-        return comment if comment isnt null
-      null
-
-    return searchComment(this.comments, commentId)
+    for comment in this.comments
+      if String(comment._id) is String(commentId)
+        return comment
+    return null
