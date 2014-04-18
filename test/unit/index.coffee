@@ -179,18 +179,23 @@ describe "MongooseRattlePlugin", ->
       it "add one user like if user doesn't already liked", (done) ->
         thingy.addLike commentorUserId, (err, updatedThingy) ->
           assert.equal(1, updatedThingy.likes.length)
+          assert.equal(1, updatedThingy.likesCount)
           done()
 
       it "not add an other user like if user already liked", (done) ->
         thingy.addLike commentorUserId, (err, updatedThingy) ->
-          thingy.addLike commentorUserId, (err, updatedThingy) ->
-            assert.equal(1, thingy.likes.length)
+          assert.equal(1, updatedThingy.likes.length)
+          assert.equal(1, updatedThingy.likesCount)
+          updatedThingy.addLike commentorUserId, (err, updatedThingy) ->
+            assert.equal(1, updatedThingy.likes.length)
+            assert.equal(1, updatedThingy.likesCount)
             done()
 
-      it "not add an other user like if user already liked when userId param is a string", (done) ->
+      it "not add an other user like if user already liked and userId param is a string", (done) ->
         thingy.addLike commentorUserId, (err, updatedThingy) ->
           thingy.addLike String(commentorUserId), (err, updatedThingy) ->
-            assert.equal(1, thingy.likes.length)
+            assert.equal(1, updatedThingy.likes.length)
+            assert.equal(1, updatedThingy.likesCount)
             done()
 
     describe "document.removeLike(userId, callback)", ->
@@ -211,17 +216,28 @@ describe "MongooseRattlePlugin", ->
       it "not affect current likes list if user didn'nt already liked", (done) ->
         thingy.removeLike userTwoId, (err, updatedThingy) ->
           assert.equal(2, updatedThingy.likes.length)
+          assert.equal(2, updatedThingy.likesCount)
           done()
 
       it "remove user like from likes list if user already liked", (done) ->
         thingy.removeLike commentorUserId, (err, updatedThingy) ->
           assert.equal(1, updatedThingy.likes.length)
+          assert.equal(1, updatedThingy.likesCount)
           done()
 
       it "remove user like from likes list if user already liked when userId param is a string", (done) ->
         thingy.removeLike String(commentorUserId), (err, updatedThingy) ->
           assert.equal(1, updatedThingy.likes.length)
+          assert.equal(1, updatedThingy.likesCount)
           done()
+
+      it "remove likesCount keep 0 when no there is no more likes", (done) ->
+        thingy.removeLike String(commentorUserId), (err, updatedThingy) ->
+          thingy.removeLike String(userOneId), (err, updatedThingy) ->
+            thingy.removeLike String(userOneId), (err, updatedThingy) ->
+              assert.equal(0, updatedThingy.likes.length)
+              assert.equal(0, updatedThingy.likesCount)
+              done()
 
     describe "document.addLikeToComment(userId, commentId, callback)", ->
       level1Msg = 'level1 message'
@@ -292,6 +308,7 @@ describe "MongooseRattlePlugin", ->
       beforeEach (done) ->
         rattles = [
           creator:      creator1Id
+          likes:        [new ObjectId(), new ObjectId()]
           comments: [
             message:       '11'
             creator:       new ObjectId()
@@ -301,6 +318,7 @@ describe "MongooseRattlePlugin", ->
           ]
         ,
           creator:  creator2Id
+          likes:        [new ObjectId(), new ObjectId()]
           comments: [
             message:       '21'
             creator:       new ObjectId()
@@ -314,12 +332,14 @@ describe "MongooseRattlePlugin", ->
         ), done
 
       describe "(num, maxNumLastPostComments, callback)", ->
-        it "get list of the number of 'num' last rattles", (done) ->
+        it "get list of the number of 'num' last rattles and return likesCount instead of likes array", (done) ->
           Thingy.find {}, (err, rattles) ->
             Thingy.getList 1, 0, (err, rattles) ->
               should.not.exists(err)
               assert.equal rattles.length, 1
               assert.deepEqual rattles[0].creator, creator2Id
+              assert !rattles[0].likes
+              assert.equal rattles[0].likesCount, 2
               done()
         it "get all rattles if 'num' is greater than the number of rattles", (done) ->
           Thingy.getList 3, 0, (err, rattles) ->

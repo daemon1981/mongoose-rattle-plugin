@@ -61,3 +61,13 @@ While threaded comments should results to a group a people having a discussion c
 But if you want to develop recursive comments here are interesting links:
 [http://stackoverflow.com/questions/7992185/mongoose-recursive-embedded-document-in-coffeescript](http://stackoverflow.com/questions/7992185/mongoose-recursive-embedded-document-in-coffeescript)
 [http://stackoverflow.com/questions/17416924/create-embedded-docs-with-mongoose-and-express](http://stackoverflow.com/questions/17416924/create-embedded-docs-with-mongoose-and-express)
+
+## Contributing
+
+### Development install
+
+```bash
+$ npm install -g mocha coffee-script
+$ npm install
+$ make test
+```

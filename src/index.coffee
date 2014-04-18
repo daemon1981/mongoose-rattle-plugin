@@ -16,15 +16,17 @@ module.exports = rattlePlugin = (schema, options) ->
     message:       type: String, required: true, max: 2000, min: 1
     creator:       type: ObjectId, ref: options.UserShemaName, required: true
     likes:         [type: ObjectId, ref: options.UserShemaName]
+    likesCount:    type: Number, default: 0
     dateCreation:  type: Date
     dateUpdate:    type: Date
 
   schema.add
     creator:       type: ObjectId, ref: options.UserShemaName, required: true
+    likes:         [type: ObjectId, ref: options.UserShemaName]
+    likesCount:    type: Number, default: 0
+    comments:      [CommentSchema]
     dateCreation:  type: Date
     dateUpdate:    type: Date
-    likes:         [type: ObjectId, ref: options.UserShemaName]
-    comments:      [CommentSchema]
 
   schema.pre "save", (next) ->
     if this.isNew
@@ -33,6 +35,7 @@ module.exports = rattlePlugin = (schema, options) ->
       this.dateCreation = moment().toDate()
 
     this.dateUpdate = moment().toDate()
+    this.likesCount = this.likes.length
     next()
 
   ####################################################################
@@ -64,7 +67,7 @@ module.exports = rattlePlugin = (schema, options) ->
       creator:      1
       dateCreation: 1
       dateUpdate:   1
-      likes:        1
+      likesCount:   1
 
     if maxLastComments > 0
       fields.comments = { $slice: [-maxLastComments, maxLastComments] }
@@ -235,7 +238,8 @@ module.exports = rattlePlugin = (schema, options) ->
     hasAlreadyLiked = this.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
 
-    this.likes.push userId if !hasAlreadyLiked
+    if !hasAlreadyLiked
+      this.likes.push userId
 
     self = this
 
