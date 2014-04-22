@@ -21,6 +21,7 @@ test-perf:
 		--compilers coffee:coffee-script \
 		--recursive \
 		--reporter $(REPORTER) \
+		--timeout 5000 \
 		test/perf
 
 .PHONY: test test-report

@@ -1,14 +1,18 @@
-require '../bootstrap'
+mongoose = require 'mongoose'
+
+mongoose.connect "mongodb://127.0.0.1:27017/mongoose-rattle-test-perf", {}, (err) ->
+  throw err if err
 
 async    = require 'async'
 assert   = require 'assert'
-moment   = require 'moment'
-mongoose = require 'mongoose'
 
 Thingy   = require '../models/thingy'
 User     = require '../models/user'
 
 ObjectId  = mongoose.Types.ObjectId;
+
+numLikes = 100
+numComments = 1000
 
 describe "MongooseRattlePlugin", ->
   thingy = {}
@@ -23,10 +27,27 @@ describe "MongooseRattlePlugin", ->
           creator: userId
         ).save next
       addComments = (createdThingy, numAffected, next) ->
-        createdThingy.comments.push [
-          message: 'dummy message'
-          creator: userId
-        ]
+        i = 0
+        likes = []
+        while i < numLikes
+          likes.push new ObjectId()
+          i++
+
+        dummyComment =
+          message:       'duuuuuuuuuuuummmmmmmmmmmmmmmmyyyyyyyyyyyyy meeeeeeeeeeeeessssssssssssaaaaaaaaaaaaaageeeeee'
+          creator:       new ObjectId()
+          likes:         likes
+          likesCount:    type: Number, default: 0
+          dateCreation:  type: Date
+          dateUpdate:    type: Date
+
+        comments = []
+        i = 0
+        while i < numComments
+          comments.push dummyComment
+          i++
+
+        createdThingy.comments = comments
         createdThingy.save next
     ], (err) ->
       Thingy.find (err, createdThingy) ->
