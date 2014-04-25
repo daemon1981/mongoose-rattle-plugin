@@ -1,58 +1,17 @@
+require '../bootstrap-perf'
+
 mongoose = require 'mongoose'
-
-mongoose.connect "mongodb://127.0.0.1:27017/mongoose-rattle-test-perf", {}, (err) ->
-  throw err if err
-
 async    = require 'async'
 assert   = require 'assert'
+memwatch = require 'memwatch'
 
 Thingy   = require '../models/thingy'
-User     = require '../models/user'
-
-ObjectId  = mongoose.Types.ObjectId;
-
-numLikes = 100
-numComments = 1000
 
 describe "MongooseRattlePlugin", ->
-  thingy = {}
-  userId = new ObjectId()
-
   before (done) ->
-    async.waterfall [
-      removeThingy = (next) ->
-        Thingy.remove next
-      createThingy = (numAffected, next) ->
-        new Thingy(
-          creator: userId
-        ).save next
-      addComments = (createdThingy, numAffected, next) ->
-        i = 0
-        likes = []
-        while i < numLikes
-          likes.push new ObjectId()
-          i++
-
-        dummyComment =
-          message:       'duuuuuuuuuuuummmmmmmmmmmmmmmmyyyyyyyyyyyyy meeeeeeeeeeeeessssssssssssaaaaaaaaaaaaaageeeeee'
-          creator:       new ObjectId()
-          likes:         likes
-          likesCount:    type: Number, default: 0
-          dateCreation:  type: Date
-          dateUpdate:    type: Date
-
-        comments = []
-        i = 0
-        while i < numComments
-          comments.push dummyComment
-          i++
-
-        createdThingy.comments = comments
-        createdThingy.save next
-    ], (err) ->
-      Thingy.find (err, createdThingy) ->
-        thingy = createdThingy
-        done()
+    Thingy.count (err, count) ->
+      throw new Error('You should populate with command "coffee test/perf-data"') if count is 0
+      done()
 
   describe "Plugin methods", ->
     describe "document.getComment(commentId)", ->
@@ -83,7 +42,23 @@ describe "MongooseRattlePlugin", ->
 
     describe "document.getList", ->
       describe "(num, maxNumLastPostComments, callback)", ->
-        it "not exceeding XKo node memory usage for the query with a document having 20 000 comments"
+        it "not exceeding 800Ko node memory usage for the operation", (done) ->
+          count = 0
+          async.whilst (->
+            count < 3
+          ), ((next) ->
+            hd = new memwatch.HeapDiff()
+            start = Date.now()
+            Thingy.getList 1, 1, (err, thingies) ->
+              diff = hd.end()
+              end = Date.now()
+              count++
+              assert.equal thingies.length, 1
+              assert parseFloat(diff.change.size_bytes) < 100000
+              console.log(end - start);
+              next()
+            return
+          ), done
       describe "(num, maxNumLastPostComments, options, callback)", ->
         describe "from a creation date", ->
           it "not exceeding XKo node memory usage for the query with a document having 20 000 comments"
