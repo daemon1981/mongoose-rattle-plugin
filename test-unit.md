@@ -12,13 +12,14 @@
          - [when user is the creator](#mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback-when-user-is-the-creator)
        - [document.addLike(userId, callback)](#mongooserattleplugin-plugin-methods-documentaddlikeuserid-callback)
        - [document.removeLike(userId, callback)](#mongooserattleplugin-plugin-methods-documentremovelikeuserid-callback)
-       - [document.addReplyToComment(userId, commentId, message, callback)](#mongooserattleplugin-plugin-methods-documentaddreplytocommentuserid-commentid-message-callback)
        - [document.addLikeToComment(userId, commentId, callback)](#mongooserattleplugin-plugin-methods-documentaddliketocommentuserid-commentid-callback)
        - [document.removeLikeFromComment(userId, commentId, callback)](#mongooserattleplugin-plugin-methods-documentremovelikefromcommentuserid-commentid-callback)
      - [Plugin statics](#mongooserattleplugin-plugin-statics)
        - [document.getList](#mongooserattleplugin-plugin-statics-documentgetlist)
          - [(num, maxNumLastPostComments, callback)](#mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-callback)
-         - [(num, maxNumLastPostComments, fromDate, callback)](#mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-fromdate-callback)
+         - [(num, maxNumLastPostComments, options, callback)](#mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-options-callback)
+           - [from a creation date](#mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-options-callback-from-a-creation-date)
+           - [populating](#mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-options-callback-populating)
        - [document.getListOfCommentsById(rattleId, num, offsetFromEnd, callback)](#mongooserattleplugin-plugin-statics-documentgetlistofcommentsbyidrattleid-num-offsetfromend-callback)
 <a name=""></a>
  
@@ -72,27 +73,14 @@ retrieve null if comment doesn't exist.
 return assert.equal(null, thingy.getComment('n0t3x1t1n9'));
 ```
 
-can retrieve a simple level comment.
+retrieve comment.
 
 ```js
 assert.equal(level1UserOneMsg, thingy.getComment(commentIds['level 1 ' + userOneId]).message);
 return assert.equal(level1UserTwoMsg, thingy.getComment(commentIds['level 1 ' + userTwoId]).message);
 ```
 
-can retrieve a second level comment.
-
-```js
-assert.equal(level2UserOneMsg, thingy.getComment(commentIds['level 2 ' + userOneId]).message);
-return assert.equal(level2UserTwoMsg, thingy.getComment(commentIds['level 2 ' + userTwoId]).message);
-```
-
-can retrieve a third level comment.
-
-```js
-return assert.equal(level3UserTwoMsg, thingy.getComment(commentIds['level 3 ' + userOneId]).message);
-```
-
-can retrieve a comment when commentId is a string and not an ObjectId.
+retrieve a comment when commentId is a string and not an ObjectId.
 
 ```js
 return assert.equal(level1UserOneMsg, thingy.getComment(String(commentIds['level 1 ' + userOneId])).message);
@@ -211,32 +199,12 @@ return thingy.removeComment('n0t3x1t1n9', commentIds['level 1'], function(err, u
 
 <a name="mongooserattleplugin-plugin-methods-documentremovecommentuserid-commentid-callback-when-user-is-the-creator"></a>
 #### when user is the creator
-can remove comment at depth 1.
+can remove comment.
 
 ```js
 return thingy.removeComment(commentorUserId, commentIds['level 1'], function(err, updatedThingy) {
   should.exists(updatedThingy);
   should.not.exists(updatedThingy.getComment(commentIds['level 1']));
-  return done();
-});
-```
-
-can remove comment at depth 2.
-
-```js
-return thingy.removeComment(commentorUserId, commentIds['level 2'], function(err, updatedThingy) {
-  should.exists(updatedThingy);
-  should.not.exists(updatedThingy.getComment(commentIds['level 2']));
-  return done();
-});
-```
-
-can remove comment at depth 3.
-
-```js
-return thingy.removeComment(commentorUserId, commentIds['level 3'], function(err, updatedThingy) {
-  should.exists(updatedThingy);
-  should.not.exists(updatedThingy.getComment(commentIds['level 3']));
   return done();
 });
 ```
@@ -268,6 +236,7 @@ add one user like if user doesn't already liked.
 ```js
 return thingy.addLike(commentorUserId, function(err, updatedThingy) {
   assert.equal(1, updatedThingy.likes.length);
+  assert.equal(1, updatedThingy.likesCount);
   return done();
 });
 ```
@@ -276,19 +245,23 @@ not add an other user like if user already liked.
 
 ```js
 return thingy.addLike(commentorUserId, function(err, updatedThingy) {
-  return thingy.addLike(commentorUserId, function(err, updatedThingy) {
-    assert.equal(1, thingy.likes.length);
+  assert.equal(1, updatedThingy.likes.length);
+  assert.equal(1, updatedThingy.likesCount);
+  return updatedThingy.addLike(commentorUserId, function(err, updatedThingy) {
+    assert.equal(1, updatedThingy.likes.length);
+    assert.equal(1, updatedThingy.likesCount);
     return done();
   });
 });
 ```
 
-not add an other user like if user already liked when userId param is a string.
+not add an other user like if user already liked and userId param is a string.
 
 ```js
 return thingy.addLike(commentorUserId, function(err, updatedThingy) {
   return thingy.addLike(String(commentorUserId), function(err, updatedThingy) {
-    assert.equal(1, thingy.likes.length);
+    assert.equal(1, updatedThingy.likes.length);
+    assert.equal(1, updatedThingy.likesCount);
     return done();
   });
 });
@@ -301,6 +274,7 @@ not affect current likes list if user didn'nt already liked.
 ```js
 return thingy.removeLike(userTwoId, function(err, updatedThingy) {
   assert.equal(2, updatedThingy.likes.length);
+  assert.equal(2, updatedThingy.likesCount);
   return done();
 });
 ```
@@ -310,6 +284,7 @@ remove user like from likes list if user already liked.
 ```js
 return thingy.removeLike(commentorUserId, function(err, updatedThingy) {
   assert.equal(1, updatedThingy.likes.length);
+  assert.equal(1, updatedThingy.likesCount);
   return done();
 });
 ```
@@ -319,36 +294,22 @@ remove user like from likes list if user already liked when userId param is a st
 ```js
 return thingy.removeLike(String(commentorUserId), function(err, updatedThingy) {
   assert.equal(1, updatedThingy.likes.length);
+  assert.equal(1, updatedThingy.likesCount);
   return done();
 });
 ```
 
-<a name="mongooserattleplugin-plugin-methods-documentaddreplytocommentuserid-commentid-message-callback"></a>
-### document.addReplyToComment(userId, commentId, message, callback)
-fails if comment doesn't exist.
+remove likesCount keep 0 when no there is no more likes.
 
 ```js
-return thingy.addReplyToComment(commentorUserId, 'n0t3x1t1n9', 'dummy message', function(err, updatedThingy) {
-  should.exists(err);
-  return done();
-});
-```
-
-fails if message length is out of min and max.
-
-```js
-return thingy.addReplyToComment(commentorUserId, commentId, '', function(err, updatedThingy) {
-  should.exists(err);
-  return done();
-});
-```
-
-append a new comment to the parent comment if parent comment exists.
-
-```js
-return thingy.addReplyToComment(commentorUserId, commentId, 'dummy message', function(err, updatedThingy) {
-  assert.equal(1, updatedThingy.getComment(commentId).comments.length);
-  return done();
+return thingy.removeLike(String(commentorUserId), function(err, updatedThingy) {
+  return thingy.removeLike(String(userOneId), function(err, updatedThingy) {
+    return thingy.removeLike(String(userOneId), function(err, updatedThingy) {
+      assert.equal(0, updatedThingy.likes.length);
+      assert.equal(0, updatedThingy.likesCount);
+      return done();
+    });
+  });
 });
 ```
 
@@ -438,7 +399,7 @@ return thingy.removeLikeFromComment(String(commentorUserId), commentId, function
 ### document.getList
 <a name="mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-callback"></a>
 #### (num, maxNumLastPostComments, callback)
-get list of the number of 'num' last rattles.
+get list of the number of 'num' last rattles and return likesCount instead of likes array.
 
 ```js
 return Thingy.find({}, function(err, rattles) {
@@ -446,6 +407,8 @@ return Thingy.find({}, function(err, rattles) {
     should.not.exists(err);
     assert.equal(rattles.length, 1);
     assert.deepEqual(rattles[0].creator, creator2Id);
+    assert(!rattles[0].likes);
+    assert.equal(rattles[0].likesCount, 2);
     return done();
   });
 });
@@ -487,13 +450,17 @@ return Thingy.getList(1, 3, function(err, rattles) {
 });
 ```
 
-<a name="mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-fromdate-callback"></a>
-#### (num, maxNumLastPostComments, fromDate, callback)
+<a name="mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-options-callback"></a>
+#### (num, maxNumLastPostComments, options, callback)
+<a name="mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-options-callback-from-a-creation-date"></a>
+##### from a creation date
 get list of last rattles created from the 'fromDate'.
 
 ```js
 return Thingy.getList(1, 0, function(err, rattles) {
-  return Thingy.getList(1, 0, rattles[0].dateCreation, function(err, rattles) {
+  return Thingy.getList(1, 0, {
+    fromCreationDate: rattles[0].dateCreation
+  }, function(err, rattles) {
     should.not.exists(err);
     assert.equal(rattles.length, 1);
     assert.deepEqual(rattles[0].creator, creator1Id);
@@ -506,7 +473,9 @@ get all last rattles if 'num' is greater than the number of last rattles.
 
 ```js
 return Thingy.getList(1, 0, function(err, rattles) {
-  return Thingy.getList(2, 0, rattles[0].dateCreation, function(err, rattles) {
+  return Thingy.getList(2, 0, {
+    fromCreationDate: rattles[0].dateCreation
+  }, function(err, rattles) {
     should.not.exists(err);
     assert.equal(rattles.length, 1);
     return done();
@@ -518,13 +487,36 @@ each rattle get the maximum of 'maxLastComments' last comments.
 
 ```js
 return Thingy.getList(1, 0, function(err, rattles) {
-  return Thingy.getList(1, 1, rattles[0].dateCreation, function(err, rattles) {
+  return Thingy.getList(1, 1, {
+    fromCreationDate: rattles[0].dateCreation
+  }, function(err, rattles) {
     should.not.exists(err);
     assert.equal(rattles.length, 1);
     assert.deepEqual(rattles[0].creator, creator1Id);
     should.exists(rattles[0].comments);
     assert.equal(rattles[0].comments.length, 1);
     assert.equal(rattles[0].comments[0].message, '12');
+    return done();
+  });
+});
+```
+
+<a name="mongooserattleplugin-plugin-statics-documentgetlist-num-maxnumlastpostcomments-options-callback-populating"></a>
+##### populating
+build.
+
+```js
+return new User({
+  _id: creator2Id,
+  name: 'Dummy Name'
+}).save(function(err) {
+  return Thingy.getList(1, 0, {
+    populate: 'creator'
+  }, function(err, rattles) {
+    should.not.exists(err);
+    assert.equal(rattles.length, 1);
+    should.exists(rattles[0].creator.name);
+    assert.equal(rattles[0].creator.name, 'Dummy Name');
     return done();
   });
 });
