@@ -2,11 +2,11 @@ mongoose = require 'mongoose'
 moment   = require 'moment'
 
 Schema   = mongoose.Schema
-ObjectId = Schema.Types.ObjectId
 
 module.exports = rattlePlugin = (schema, options) ->
   options = {} if (!options)
   options.UserShemaName = 'User' if (!options.UserShemaName)
+  options.ObjectId = Schema.Types.ObjectId if (!options.ObjectId)
 
   # Schema strategies for embedded comments
   #
@@ -14,15 +14,15 @@ module.exports = rattlePlugin = (schema, options) ->
 
   CommentSchema = new Schema
     message:       type: String, required: true, max: 2000, min: 1
-    creator:       type: ObjectId, ref: options.UserShemaName, required: true
-    likes:         [type: ObjectId, ref: options.UserShemaName]
+    creator:       type: options.ObjectId, ref: options.UserShemaName, required: true
+    likes:         [type: options.ObjectId, ref: options.UserShemaName]
     likesCount:    type: Number, default: 0
     dateCreation:  type: Date
     dateUpdate:    type: Date
 
   schema.add
-    creator:       type: ObjectId, ref: options.UserShemaName, required: true
-    likes:         [type: ObjectId, ref: options.UserShemaName]
+    creator:       type: options.ObjectId, ref: options.UserShemaName, required: true
+    likes:         [type: options.ObjectId, ref: options.UserShemaName]
     likesCount:    type: Number, default: 0
     comments:      [CommentSchema]
     dateCreation:  type: Date
