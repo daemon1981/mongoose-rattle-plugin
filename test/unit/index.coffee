@@ -4,7 +4,6 @@ async    = require 'async'
 sinon    = require 'sinon'
 assert   = require 'assert'
 moment   = require 'moment'
-should   = require 'should'
 mongoose = require 'mongoose'
 
 Thingy   = require '../models/thingy'
@@ -23,14 +22,14 @@ describe "MongooseRattlePlugin", ->
   describe "document.save(callback)", ->
     it "update dateCreation and dateUpdate when inserting", (done) ->
       clock = sinon.useFakeTimers()
-      new Thingy(creator: objectCreatorUserId, owner: objectCreatorUserId).save (err, thingySaved) ->
+      new Thingy(creator: objectCreatorUserId).save (err, thingySaved) ->
         assert.deepEqual(new Date(), thingySaved.dateCreation)
         assert.deepEqual(new Date(), thingySaved.dateUpdate)
         clock.restore()
         done()
     it "only update dateUpdate when updating", (done) ->
       clock = sinon.useFakeTimers(new Date(2011, 0, 1, 1, 1, 36).getTime())
-      new Thingy(creator: objectCreatorUserId, owner: objectCreatorUserId).save (err, thingySaved) ->
+      new Thingy(creator: objectCreatorUserId).save (err, thingySaved) ->
         clock.restore()
         clock = sinon.useFakeTimers(new Date(2012, 0, 1, 1, 1, 36).getTime())
         thingySaved.save (err, thingySaved) ->
@@ -41,7 +40,7 @@ describe "MongooseRattlePlugin", ->
 
   describe "Plugin methods", ->
     beforeEach (done) ->
-      new Thingy(creator: objectCreatorUserId, owner: objectCreatorUserId).save (err, thingySaved) ->
+      new Thingy(creator: objectCreatorUserId).save (err, thingySaved) ->
         thingy = thingySaved
         done()
 
@@ -75,10 +74,10 @@ describe "MongooseRattlePlugin", ->
     describe "document.addComment(userId, message, callback)", ->
       it "append a new comment and return comment id", (done) ->
         commentId = thingy.addComment commentorUserId, 'dummy message', (err) ->
-          should.not.exists(err)
-          should.exists(commentId)
+          assert !err
+          assert commentId
           Thingy.findById thingy._id, (err, updatedThingy) ->
-            should.exists(updatedThingy)
+            assert updatedThingy
             assert.equal(1, updatedThingy.comments.length)
             done()
       it "update dateCreation and dateUpdated", (done) ->
@@ -90,7 +89,7 @@ describe "MongooseRattlePlugin", ->
           done()
       it "fails if message length is out of min and max", (done) ->
         thingy.addComment commentorUserId, '', (err) ->
-          should.exists(err)
+          assert err
           done()
 
     describe "document.editComment(userId, commentId, message, callback)", ->
@@ -104,20 +103,20 @@ describe "MongooseRattlePlugin", ->
 
       it "fails if message length is out of min and max", (done) ->
         thingy.editComment commentorUserId, commentId, '', (err) ->
-          should.exists(err)
+          assert err
           done()
       describe 'when user is not the creator', ->
         it "always fails", (done) ->
           thingy.editComment 'n0t3x1t1n9', commentId, updatedMessage, (err) ->
-            should.exists(err)
+            assert err
             done()
       describe 'when user is the creator', ->
         checkEditCommentWhenOwner = (commentorUserId, commentId, updatedMessage, done) ->
           thingy.editComment commentorUserId, commentId, updatedMessage, (err) ->
-            should.not.exists(err)
-            should.exists(commentId)
+            assert !err
+            assert commentId
             Thingy.findById thingy._id, (err, updatedThingy) ->
-              should.exists(updatedThingy)
+              assert updatedThingy
               assert.equal(1, updatedThingy.comments.length)
               assert.equal(updatedMessage, updatedThingy.comments[0].message)
               done()
@@ -150,29 +149,29 @@ describe "MongooseRattlePlugin", ->
 
       it "fails if comment doesn't exist", (done) ->
         thingy.removeComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
-          should.exists(err)
+          assert err
           done()
       describe 'when user is not the creator', ->
         it "it's not removing the comment", (done) ->
           thingy.removeComment 'n0t3x1t1n9', commentIds['level 1'], (err, updatedThingy) ->
-            should.exists(updatedThingy)
-            should.exists(updatedThingy.getComment(commentIds['level 1']))
+            assert updatedThingy
+            assert updatedThingy.getComment(commentIds['level 1'])
             done()
       describe 'when user is the creator', ->
         it "can remove comment", (done) ->
           thingy.removeComment commentorUserId, commentIds['level 1'], (err, updatedThingy) ->
-            should.exists(updatedThingy)
-            should.not.exists(updatedThingy.getComment(commentIds['level 1']))
+            assert updatedThingy
+            assert !updatedThingy.getComment(commentIds['level 1'])
             done()
         it "remove comment when userId param is a string", (done) ->
           thingy.removeComment String(commentorUserId), commentIds['level 1'], (err, updatedThingy) ->
-            should.exists(updatedThingy)
-            should.not.exists(updatedThingy.getComment(commentIds['level 1']))
+            assert updatedThingy
+            assert !updatedThingy.getComment(commentIds['level 1'])
             done()
         it "remove comment when commentId is a string", (done) ->
           thingy.removeComment commentorUserId, String(commentIds['level 1']), (err, updatedThingy) ->
-            should.exists(updatedThingy)
-            should.not.exists(updatedThingy.getComment(commentIds['level 1']))
+            assert updatedThingy
+            assert !updatedThingy.getComment(commentIds['level 1'])
             done()
 
     describe "document.addLike(userId, callback)", ->
@@ -253,7 +252,7 @@ describe "MongooseRattlePlugin", ->
 
       it "fails if comment doesn't exist", (done) ->
         thingy.addLikeToComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
-          should.exists(err)
+          assert err
           done()
       it "add one user like if user doesn't already liked and comment exists", (done) ->
         thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
@@ -285,7 +284,7 @@ describe "MongooseRattlePlugin", ->
 
       it "fails if comment doesn't exist", (done) ->
         thingy.removeLikeFromComment commentorUserId, 'n0t3x1t1n9', (err, updatedThingy) ->
-          should.exists(err)
+          assert err
           done()
       it "not affect current likes list if user didn'nt already liked", (done) ->
         thingy.removeLikeFromComment new ObjectId(), commentId, (err, updatedThingy) ->
@@ -335,7 +334,7 @@ describe "MongooseRattlePlugin", ->
         it "get list of the number of 'num' last rattles and return likesCount instead of likes array", (done) ->
           Thingy.find {}, (err, rattles) ->
             Thingy.getList 1, 0, (err, rattles) ->
-              should.not.exists(err)
+              assert !err
               assert.equal rattles.length, 1
               assert.deepEqual rattles[0].creator, creator2Id
               assert !rattles[0].likes
@@ -343,23 +342,23 @@ describe "MongooseRattlePlugin", ->
               done()
         it "get all rattles if 'num' is greater than the number of rattles", (done) ->
           Thingy.getList 3, 0, (err, rattles) ->
-            should.not.exists(err)
+            assert !err
             assert.equal rattles.length, 2
             done()
         it "each rattle get the maximum of 'maxLastComments' last comments", (done) ->
           Thingy.getList 1, 1, (err, rattles) ->
-            should.not.exists(err)
+            assert !err
             assert.equal rattles.length, 1
             assert.deepEqual rattles[0].creator, creator2Id
-            should.exists(rattles[0].comments)
+            assert rattles[0].comments
             assert.equal rattles[0].comments.length, 1
             assert.equal rattles[0].comments[0].message, '22'
             done()
         it "each all comments when 'maxLastComments' is greater than number of comments", (done) ->
           Thingy.getList 1, 3, (err, rattles) ->
-            should.not.exists(err)
+            assert !err
             assert.equal rattles.length, 1
-            should.exists(rattles[0].comments)
+            assert rattles[0].comments
             assert.equal rattles[0].comments.length, 2
             done()
       describe "(num, maxNumLastPostComments, options, callback)", ->
@@ -368,7 +367,7 @@ describe "MongooseRattlePlugin", ->
             # retrieve last rattle
             Thingy.getList 1, 0, (err, rattles) ->
               Thingy.getList 1, 0, fromCreationDate: rattles[0].dateCreation, (err, rattles) ->
-                should.not.exists(err)
+                assert !err
                 assert.equal rattles.length, 1
                 assert.deepEqual rattles[0].creator, creator1Id
                 done()
@@ -376,17 +375,17 @@ describe "MongooseRattlePlugin", ->
             # retrieve last rattle
             Thingy.getList 1, 0, (err, rattles) ->
               Thingy.getList 2, 0, fromCreationDate: rattles[0].dateCreation, (err, rattles) ->
-                should.not.exists(err)
+                assert !err
                 assert.equal rattles.length, 1
                 done()
           it "each rattle get the maximum of 'maxLastComments' last comments", (done) ->
             # retrieve last rattle
             Thingy.getList 1, 0, (err, rattles) ->
               Thingy.getList 1, 1, fromCreationDate: rattles[0].dateCreation, (err, rattles) ->
-                should.not.exists(err)
+                assert !err
                 assert.equal rattles.length, 1
                 assert.deepEqual rattles[0].creator, creator1Id
-                should.exists(rattles[0].comments)
+                assert rattles[0].comments
                 assert.equal rattles[0].comments.length, 1
                 assert.equal rattles[0].comments[0].message, '12'
                 done()
@@ -395,9 +394,9 @@ describe "MongooseRattlePlugin", ->
             new User({_id: creator2Id, name: 'Dummy Name'}).save (err) ->
               # retrieve last rattle
               Thingy.getList 1, 0, {populate: 'creator'}, (err, rattles) ->
-                  should.not.exists(err)
+                  assert !err
                   assert.equal rattles.length, 1
-                  should.exists(rattles[0].creator.name)
+                  assert rattles[0].creator.name
                   assert.equal rattles[0].creator.name, 'Dummy Name'
                   done()
 
@@ -431,31 +430,31 @@ describe "MongooseRattlePlugin", ->
 
       it "get last 'num' of comments for 'rattleId' when offsetFromEnd is 0", (done) ->
         Thingy.getListOfCommentsById rattleId, 1, 0, (err, comments) ->
-          should.not.exists(err)
+          assert !err
           assert.equal comments.length, 1
           assert.equal comments[0].message, '13'
           done()
       it "get last num of comments from the offsetFromEnd", (done) ->
         Thingy.getListOfCommentsById rattleId, 1, 1, (err, comments) ->
-          should.not.exists(err)
+          assert !err
           assert.equal comments.length, 1
           assert.equal comments[0].message, '12'
           done()
       it "get no comments when offsetFromEnd is equal to the number of comments", (done) ->
         Thingy.getListOfCommentsById rattleId, 1, 3, (err, comments) ->
-          should.not.exists(err)
+          assert !err
           assert.equal comments.length, 0
           done()
       it "limit comments when offsetFromEnd + num is greater that the number of comments", (done) ->
         Thingy.getListOfCommentsById rattleId, 3, 1, (err, comments) ->
-          should.not.exists(err)
+          assert !err
           assert.equal comments[0].message, '11'
           assert.equal comments[1].message, '12'
           assert.equal comments.length, 2
           done()
       it "keep comments order", (done) ->
         Thingy.getListOfCommentsById rattleId, 3, 0, (err, comments) ->
-          should.not.exists(err)
+          assert !err
           assert.equal comments[0].message, '11'
           assert.equal comments[1].message, '12'
           assert.equal comments[2].message, '13'
