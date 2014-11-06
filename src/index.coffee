@@ -37,6 +37,9 @@ module.exports = rattlePlugin = (schema, options) ->
     this.dateUpdate = moment().toDate()
     this.likesCount = this.likes.length
     next()
+  CommentSchema.pre "save", (next) ->
+    this.likesCount = this.likes.length
+    next()
 
   ####################################################################
   # statics
