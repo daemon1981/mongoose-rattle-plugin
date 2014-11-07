@@ -258,16 +258,19 @@ describe "MongooseRattlePlugin", ->
       it "add one user like if user doesn't already liked and comment exists", (done) ->
         thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
           assert.equal 1, updatedThingy.getComment(commentId).likes.length
+          assert.equal 1, updatedThingy.getComment(commentId).likesCount
           done()
       it "not add an other user like if user already liked and comment exists", (done) ->
         thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
           thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
             assert.equal 1, updatedThingy.getComment(commentId).likes.length
+            assert.equal 1, updatedThingy.getComment(commentId).likesCount
             done()
       it "not add an other user like if user already liked and comment exists when userId param is a string", (done) ->
         thingy.addLikeToComment String(commentorUserId), commentId, (err, updatedThingy) ->
           thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
             assert.equal 1, updatedThingy.getComment(commentId).likes.length
+            assert.equal 1, updatedThingy.getComment(commentId).likesCount
             done()
 
     describe "document.removeLikeFromComment(userId, commentId, callback)", ->
@@ -290,14 +293,17 @@ describe "MongooseRattlePlugin", ->
       it "not affect current likes list if user didn'nt already liked", (done) ->
         thingy.removeLikeFromComment new ObjectId(), commentId, (err, updatedThingy) ->
           assert.equal 2, updatedThingy.getComment(commentId).likes.length
+          assert.equal 2, updatedThingy.getComment(commentId).likesCount
           done()
       it "remove user like from likes list if user already liked", (done) ->
         thingy.removeLikeFromComment commentorUserId, commentId, (err, updatedThingy) ->
           assert.equal 1, updatedThingy.getComment(commentId).likes.length
+          assert.equal 1, updatedThingy.getComment(commentId).likesCount
           done()
       it "remove user like from likes list if user already liked when userId param is a string", (done) ->
         thingy.removeLikeFromComment String(commentorUserId), commentId, (err, updatedThingy) ->
           assert.equal 1, updatedThingy.getComment(commentId).likes.length
+          assert.equal 1, updatedThingy.getComment(commentId).likesCount
           done()
 
   describe "Plugin statics", ->
