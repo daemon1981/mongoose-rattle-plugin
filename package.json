@@ -1,7 +1,7 @@
 {
   "name": "mongoose-rattle-plugin",
   "description": "Add social interactions (messages and likes) to mongoose document",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "Damien Saillard",
   "dependencies": {
     "mongoose": "3.8.x"
