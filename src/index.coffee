@@ -81,7 +81,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     if options.populate
       query.populate options.populate
-    
+
     query.exec(callback)
 
   ###*
@@ -219,10 +219,13 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.methods.removeComment = (userId, commentId, callback) ->
     return callback(new Error('Comment doesn\'t exist')) if !this.getComment(commentId)
 
-
+    found = false
     this.comments = this.comments.filter (comment) ->
-      return String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
+      keep = String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
+      found = found || !keep
+      return keep
 
+    return callback(new Error('Comment not found among creator\'s comments'), this) if !found
     self = this
 
     this.save (err, updatedRattle) ->
@@ -241,9 +244,9 @@ module.exports = rattlePlugin = (schema, options) ->
     hasAlreadyLiked = this.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
 
-    if !hasAlreadyLiked
-      this.likes.push userId
+    return callback(new Error('User has already liked this'), this) if hasAlreadyLiked
 
+    this.likes.push userId
     self = this
 
     this.save (err, updatedRattle) ->
@@ -266,7 +269,8 @@ module.exports = rattlePlugin = (schema, options) ->
     hasAlreadyLiked = comment.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
 
-    comment.likes.push userId  if !hasAlreadyLiked
+    return callback(new Error('User has already liked this comment'), this) if hasAlreadyLiked
+    comment.likes.push userId
 
     self = this
 
@@ -283,9 +287,13 @@ module.exports = rattlePlugin = (schema, options) ->
    * @callback(err, updatedRattle)
   ###
   schema.methods.removeLike = (userId, callback) ->
+    found = false
     this.likes = this.likes.filter (likeUserId) ->
-      return String(likeUserId) isnt String(userId)
+      keep = String(likeUserId) isnt String(userId)
+      found = found || !keep
+      return keep
 
+    return callback(new Error('User\'s like not found among document\'s likes'), this) if !found
     self = this
 
     this.save (err, updatedRattle) ->
@@ -305,9 +313,13 @@ module.exports = rattlePlugin = (schema, options) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
 
+    found = false
     comment.likes = comment.likes.filter (likeUserId) ->
-      return String(likeUserId) isnt String(userId)
+      keep = String(likeUserId) isnt String(userId)
+      found = found || !keep
+      return keep
 
+    return callback(new Error('User\'s like not found among comment\'s likes'), this) if !found
     self = this
 
     this.save (err, updatedRattle) ->
