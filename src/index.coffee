@@ -81,7 +81,7 @@ module.exports = rattlePlugin = (schema, options) ->
 
     if options.populate
       query.populate options.populate
-    
+
     query.exec(callback)
 
   ###*
@@ -219,16 +219,19 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.methods.removeComment = (userId, commentId, callback) ->
     return callback(new Error('Comment doesn\'t exist')) if !this.getComment(commentId)
 
-    lengthBefore = this.comments.length;
+    found = false
     this.comments = this.comments.filter (comment) ->
-      return String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
+      keep = String(comment.creator) isnt String(userId) || String(comment._id) isnt String(commentId)
+      found = found || !keep
+      return keep
 
+    return callback(new Error('Comment not found among creator\'s comments'), this) if !found
     self = this
 
     this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
-      # emit removeComment event with information on object, targetId, actor and whether action has already occured
-      self.emit('removeComment', self._id, self, userId, lengthBefore == updatedRattle.comments.length)
+      # emit removeComment event with information on object, targetId, actor
+      self.emit('removeComment', self._id, self, userId)
       callback(err, updatedRattle)
 
   ###*
@@ -241,15 +244,15 @@ module.exports = rattlePlugin = (schema, options) ->
     hasAlreadyLiked = this.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
 
-    if !hasAlreadyLiked
-      this.likes.push userId
+    return callback(new Error('User has already liked this'), this) if hasAlreadyLiked
 
+    this.likes.push userId
     self = this
 
     this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
-      # emit addLike event with information on object, targetId, actor and whether action has already occured
-      self.emit('addLike', userId, self, userId, hasAlreadyLiked)
+      # emit addLike event with information on object, targetId, actor
+      self.emit('addLike', userId, self, userId)
       callback(err, updatedRattle)
 
   ###*
@@ -266,14 +269,15 @@ module.exports = rattlePlugin = (schema, options) ->
     hasAlreadyLiked = comment.likes.some (likeUserId) ->
       return String(likeUserId) is String(userId)
 
-    comment.likes.push userId  if !hasAlreadyLiked
+    return callback(new Error('User has already liked this comment'), this) if hasAlreadyLiked
+    comment.likes.push userId
 
     self = this
 
     this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
-      # emit addLikeToComment event with information on object, targetId, actor and whether action has already occured
-      self.emit('addLikeToComment', commentId, self, userId, hasAlreadyLiked)
+      # emit addLikeToComment event with information on object, targetId, actor
+      self.emit('addLikeToComment', commentId, self, userId)
       callback(err, updatedRattle)
 
   ###*
@@ -283,16 +287,19 @@ module.exports = rattlePlugin = (schema, options) ->
    * @callback(err, updatedRattle)
   ###
   schema.methods.removeLike = (userId, callback) ->
-    lengthBefore = this.likes.length
+    found = false
     this.likes = this.likes.filter (likeUserId) ->
-      return String(likeUserId) isnt String(userId)
+      keep = String(likeUserId) isnt String(userId)
+      found = found || !keep
+      return keep
 
+    return callback(new Error('User\'s like not found among document\'s likes'), this) if !found
     self = this
 
     this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
-      # emit removeLike event with information on object, targetId, actor and whether action has already occured
-      self.emit('removeLike', userId, self, userId, lengthBefore == updatedRattle.likes.length)
+      # emit removeLike event with information on object, targetId, actor
+      self.emit('removeLike', userId, self, userId)
       callback(err, updatedRattle)
 
   ###*
@@ -305,16 +312,20 @@ module.exports = rattlePlugin = (schema, options) ->
   schema.methods.removeLikeFromComment = (userId, commentId, callback) ->
     comment = this.getComment(commentId)
     return callback(new Error('Comment doesn\'t exist')) if !comment
-    lengthBefore = comment.likes.length
-    comment.likes = comment.likes.filter (likeUserId) ->
-      return String(likeUserId) isnt String(userId)
 
+    found = false
+    comment.likes = comment.likes.filter (likeUserId) ->
+      keep = String(likeUserId) isnt String(userId)
+      found = found || !keep
+      return keep
+
+    return callback(new Error('User\'s like not found among comment\'s likes'), this) if !found
     self = this
 
     this.save (err, updatedRattle) ->
       return callback(err) if err isnt null
-      # emit removeLike event with information on object, targetId, actor and whether action has already occured
-      self.emit('removeLikeFromComment', commentId, self, userId, lengthBefore == comment.likes.length)
+      # emit removeLike event with information on object, targetId, actor
+      self.emit('removeLikeFromComment', commentId, self, userId)
       callback(err, updatedRattle)
 
   ###*

@@ -155,6 +155,7 @@ describe "MongooseRattlePlugin", ->
       describe 'when user is not the creator', ->
         it "it's not removing the comment", (done) ->
           thingy.removeComment 'n0t3x1t1n9', commentIds['level 1'], (err, updatedThingy) ->
+            should.exists(err)
             should.exists(updatedThingy)
             should.exists(updatedThingy.getComment(commentIds['level 1']))
             done()
@@ -187,6 +188,7 @@ describe "MongooseRattlePlugin", ->
           assert.equal(1, updatedThingy.likes.length)
           assert.equal(1, updatedThingy.likesCount)
           updatedThingy.addLike commentorUserId, (err, updatedThingy) ->
+            should.exist(err)
             assert.equal(1, updatedThingy.likes.length)
             assert.equal(1, updatedThingy.likesCount)
             done()
@@ -215,6 +217,7 @@ describe "MongooseRattlePlugin", ->
 
       it "not affect current likes list if user didn'nt already liked", (done) ->
         thingy.removeLike userTwoId, (err, updatedThingy) ->
+          should.exists(err)
           assert.equal(2, updatedThingy.likes.length)
           assert.equal(2, updatedThingy.likesCount)
           done()
@@ -263,12 +266,14 @@ describe "MongooseRattlePlugin", ->
       it "not add an other user like if user already liked and comment exists", (done) ->
         thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
           thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
+            should.exists(err)
             assert.equal 1, updatedThingy.getComment(commentId).likes.length
             assert.equal 1, updatedThingy.getComment(commentId).likesCount
             done()
       it "not add an other user like if user already liked and comment exists when userId param is a string", (done) ->
         thingy.addLikeToComment String(commentorUserId), commentId, (err, updatedThingy) ->
           thingy.addLikeToComment commentorUserId, commentId, (err, updatedThingy) ->
+            should.exists(err)
             assert.equal 1, updatedThingy.getComment(commentId).likes.length
             assert.equal 1, updatedThingy.getComment(commentId).likesCount
             done()
@@ -292,6 +297,7 @@ describe "MongooseRattlePlugin", ->
           done()
       it "not affect current likes list if user didn'nt already liked", (done) ->
         thingy.removeLikeFromComment new ObjectId(), commentId, (err, updatedThingy) ->
+          should.exists(err)
           assert.equal 2, updatedThingy.getComment(commentId).likes.length
           assert.equal 2, updatedThingy.getComment(commentId).likesCount
           done()
