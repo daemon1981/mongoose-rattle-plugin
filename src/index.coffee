@@ -1,4 +1,6 @@
-mongoose = require 'mongoose'
+keystone = require 'keystone'
+
+mongoose = keystone.mongoose
 moment   = require 'moment'
 
 Schema   = mongoose.Schema
