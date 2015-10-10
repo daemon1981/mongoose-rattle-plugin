@@ -5,7 +5,7 @@ Schema   = mongoose.Schema
 RattlePlugin = require '../../src/index'
 
 ThingySchema = new Schema()
-ThingySchema.plugin RattlePlugin, UserShemaName: 'User'
+ThingySchema.plugin RattlePlugin, UserSchemaName: 'User'
 
 Thingy = mongoose.model "Thingy", ThingySchema
 

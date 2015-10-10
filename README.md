@@ -41,6 +41,15 @@ var MyModel = mongoose.model("MyModel", MySchema);
 module.exports = MyModel;
 ```
 
+### Specifying Custom UserSchemaName and UserIdType
+
+If the name of your User model schema is not "User" or the User's id type is not `Schema.Types.ObjectId`, you can specify those as options to the plugin:
+
+```javascript
+MySchema.plugin(MongooseRattlePlugin, { UserSchemaName: 'UserModel', UserIdType: Some.Other.Type });
+```
+
+
 ### Specifications
 
 Please see the [specifications here](https://github.com/daemon1981/mongoose-rattle-plugin/blob/master/test-unit.md)
